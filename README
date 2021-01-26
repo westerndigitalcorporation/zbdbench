@@ -1,7 +1,0 @@
-zbench: Zoned toolchain to run benchmarks on zoned block devices
-
-Enables easy benchmarking with:
-
- - fio
- - RocksDB + ZenFS
- - MySQL + RocksDB + ZenFS

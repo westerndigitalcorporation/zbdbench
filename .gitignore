@@ -1,0 +1,6 @@
+*.pyc
+
+output/
+
+# macOS
+.DS_Store
