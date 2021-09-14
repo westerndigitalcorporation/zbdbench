@@ -43,7 +43,7 @@ Getting Started
 
 The run.py script runs a set of predefined benchmarks on a block device.
 
-The block device does not have to be zoned, although the workloads will work
+The block device does not have to be zoned - the workloads will work
 on both types of block devices.
 
 The script performs a set of checks before running the benchmarks, such as
