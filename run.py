@@ -142,7 +142,8 @@ def run_benchmarks(dev, container, benches):
         b.setup(dev, container, run_output)
         b.run(dev, container)
         b.teardown(dev, container)
-        b.report(run_output)
+        csv_file = b.report(run_output)
+        b.plot(csv_file)
 
     print("\nCompleted %s benchmark(s)" % len(benches))
 
@@ -150,7 +151,13 @@ def run_reports(path, benches):
     for b in benches:
         print("Generating report for: %s" % b.id())
 
-        b.report(path)
+        csv_file = b.report(path)
+        b.plot(csv_file)
+
+def run_plots(csv_file, benches):
+    for b in benches:
+        print("Generating plot for: %s, %s" % (b.id(), csv_file))
+        b.plot(csv_file)
 
 def print_help():
     print('Benchmarking')
@@ -167,6 +174,10 @@ def print_help():
     print('  Generate specific report')
     print('    run.py -r output_dir -b fio_zone_write')
 
+    print('\nPloting')
+    print('  Generate specific plot')
+    print('    run.py -b fio_zone_write -p csv_file')
+
     print('\nExecution Environment')
     print('  Use system executables')
     print('    run.py -d /dev/nvmeXnY -c system')
@@ -178,7 +189,7 @@ def main(argv):
     dev = ''
     container = 'docker'
     try:
-        opts, args = getopt.getopt(argv, "hd:c:r:b:l", ["dev=", "container=", "report", "benchmark=", "list_benchmarks"])
+        opts, args = getopt.getopt(argv, "hd:c:r:p:b:l", ["dev=", "container=", "report", "plot=","benchmark=", "list_benchmarks"])
     except getopt.GetoptError:
         print_help()
         sys.exit(2)
@@ -186,9 +197,12 @@ def main(argv):
     run = ''
     benches = base_benches
     for opt, arg in opts:
+        if opt in ('-p', "--plot="):
+            run = 'plot'
+            csv_file = arg
         if opt in ('-r', "--report="):
-                run = 'report'
-                report_path = arg
+            run = 'report'
+            report_path = arg
         if opt in ("-d", "--dev"):
             run = 'bench'
             dev = arg
@@ -212,7 +226,9 @@ def main(argv):
                 list_benchs(base_benches)
                 sys.exit(1)
 
-    if run == 'report':
+    if run == 'plot':
+        run_plots(csv_file, benches)
+    elif run == 'report':
         run_reports(report_path, benches)
     elif run == 'bench':
         run_benchmarks(dev, container, benches)

@@ -1,4 +1,12 @@
-from base import base_benches, Bench
+from base import base_benches, Bench, Plot
+
+class BenchPlot(Plot):
+
+    def __init__(self, csv_file):
+        super().__init__(csv_file)
+
+    def myplot(self):
+        pass
 
 class Run(Bench):
 
@@ -22,7 +30,12 @@ class Run(Bench):
         pass
 
     def report(self):
+        # return csv_file
         pass
+
+    def plot(self, csv_file):
+        plot = BenchPlot(csv_file)
+        plot.myplot()
 
 # Uncomment to enable benchmark
 #base_benches.append(Run())

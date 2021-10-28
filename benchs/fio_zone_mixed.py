@@ -113,5 +113,6 @@ class Run(Bench):
             w.writerows(csv_data)
 
         print("  Output written to: %s" % csv_file)
+        return csv_file
 
 base_benches.append(Run())

@@ -98,5 +98,6 @@ class Run(Bench):
             cw.writerows(list(map(list, zip(*[dsx, dp]))))
 
         print("  Output written to: %s" % csv_file)
+        return csv_file
 
 base_benches.append(Run())

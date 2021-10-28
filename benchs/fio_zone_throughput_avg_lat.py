@@ -2,8 +2,78 @@ import json
 import csv
 import sys
 import glob
-from .base import base_benches, Bench
+import matplotlib.pyplot as plt
+from .base import base_benches, Bench, Plot
 from benchs.base import is_dev_zoned
+
+class BenchPlot(Plot):
+
+    def __init__(self, csv_file):
+        super().__init__(csv_file)
+        self.headline_additions = "All test runs where executed with the size of two times of the devices zone size.\nThe runs where executed twice, the reported numbers are averaged over these two runs."
+
+    def generateBarGraph(self, operation, value_of_interest, comparison_csv_file=""):
+        filter_dict = {}
+        filter_dict['operation'] = [operation]
+        #Label consits of the values form columns 1, 2 and 3 for a given row
+        label_row_items = list(range(1, 4))
+        self.setupGenericBarGraph(filter_dict, value_of_interest, label_row_items, comparison_csv_file, (25, 10))
+
+        if value_of_interest == "throughput_MiBs":
+            plt.title("Throughput [MiBs] on %s.\n%s" % (operation, self.headline_additions))
+            plt.ylabel("Throughput [MiBs]")
+            self.saveInOutputDir(("Throughput_%s.pdf" % operation))
+        elif value_of_interest == "avg_lat_us":
+            plt.title("Average Latency [µs] on %s.\n%s" % (operation, self.headline_additions))
+            plt.ylabel("Average Latency [µs]")
+            self.saveInOutputDir(("AverageLatency_%s.pdf" % operation))
+        else:
+            plt.title("%s on %s.\n%s" % (value_of_interest, operation, self.headline_additions))
+            plt.ylabel(value_of_interest)
+            self.saveInOutputDir(("%s_%s.pdf" % (value_of_interest, operation)))
+
+    def generateBlockSizeGraph(self, operation, max_open_zones, value_of_interest):
+        self.resetPlot()
+        benchmarkRows = csv.DictReader(open(self.csv_file))
+        y_values_QD1 = []
+        y_values_QD2 = []
+        y_values_QD4 = []
+        y_values_QD8 = []
+
+        x_ticks = ["4", "8", "16", "64", "128"]
+        x_values = [4, 8, 16, 64, 128]
+        for row in benchmarkRows:
+            if row['operation'] == operation and row['max_open_zones'] == max_open_zones:
+                if row['queue_depth'] == "1":
+                    y_values_QD1.append(int(row[value_of_interest]))
+                elif row['queue_depth'] == "2":
+                    y_values_QD2.append(int(row[value_of_interest]))
+                elif row['queue_depth'] == "4":
+                    y_values_QD4.append(int(row[value_of_interest]))
+                elif row['queue_depth'] == "8":
+                    y_values_QD8.append(int(row[value_of_interest]))
+
+        plt.figure(figsize=(20,9))
+        plt.xticks(x_values, x_ticks)
+        label_additions = ""
+        if "write" in operation:
+            label_additions = str(", max_open_zones=%s" % max_open_zones)
+
+        plt.plot(x_values, y_values_QD1, '-mo', label=("QD=1%s" % label_additions) )
+        plt.plot(x_values, y_values_QD2, '-gs', label=("QD=2%s" % label_additions) )
+        plt.plot(x_values, y_values_QD4, '-yv', label=("QD=4%s" % label_additions) )
+        plt.plot(x_values, y_values_QD8, '-bd', label=("QD=8%s" % label_additions) )
+        plt.legend()
+        plt.xlabel("Block Size [KiB]")
+
+        if value_of_interest == "throughput_MiBs":
+            plt.title("Throughput [MiBs] on %s.\n%s" % (operation, self.headline_additions))
+            plt.ylabel("Throughput [MiBs]")
+            self.saveInOutputDir(("Throughput_%s_MOZ%s.pdf" % (operation, max_open_zones)))
+        elif value_of_interest == "avg_lat_us":
+            plt.title("Average Latency [µs] on %s.\n%s" % (operation, self.headline_additions))
+            plt.ylabel("Average Latency [µs]")
+            self.saveInOutputDir(("AverageLatency_%sMOZ%s.pdf" % (operation, max_open_zones)))
 
 class Run(Bench):
     jobname = "fio_zone_throughput_avg_lat"
@@ -61,7 +131,10 @@ class Run(Bench):
                 print("Finished preping the drive")
 
             for max_open_zones in max_open_zones_list:
-                for queue_depth in [1, 4, 16, 64]:
+                for queue_depth in [1, 2, 4, 8]:
+                    if queue_depth > max_open_zones:
+                        continue
+
                     for block_size in ["4K", "8K", "16K", "64K", "128K"]:
                         for run in range(1, runs+1):
                             output_name = ("%s-%s-%s-%s-%s-%sof%s") % (operation, max_open_zones, queue_depth, block_size, self.jobname, run, runs)
@@ -222,10 +295,40 @@ class Run(Bench):
         csv_file = path + "/" + self.jobname + ".csv"
         with open(csv_file, 'w') as f:
             w = csv.writer(f, delimiter=',')
-            w.writerow(['operation', 'max_open_zones', 'queue_depth', 'block_size', 'avg_lat_us', 'throughput_MiBs', 'clat_p1_us', 'clat_p5_us', 'clat_p10_us', 'clat_p20_us', 'clat_p30_us', 'clat_p40_us', 'clat_p50_us', 'clat_p60_us', 'clat_p70_us', 'clat_p80_us', 'clat_p90_us', 'clat_p99_us', 'clat_p99.9_us', 'clat_p99.99_us', 'clat_p99.999_us', 'clat_p99.9999_us', 'clat_p99.99999_us'])
+            w.writerow(['operation', 'max_open_zones', 'queue_depth', 'block_size_K', 'avg_lat_us', 'throughput_MiBs', 'clat_p1_us', 'clat_p5_us', 'clat_p10_us', 'clat_p20_us', 'clat_p30_us', 'clat_p40_us', 'clat_p50_us', 'clat_p60_us', 'clat_p70_us', 'clat_p80_us', 'clat_p90_us', 'clat_p99_us', 'clat_p99.9_us', 'clat_p99.99_us', 'clat_p99.999_us', 'clat_p99.9999_us', 'clat_p99.99999_us', 'clat_p100_us'])
             w.writerows(csv_data)
 
         print("  Output written to: %s" % csv_file)
+        return csv_file
+
+    def plot(self, csv_file):
+        plot = BenchPlot(csv_file)
+
+        plot.generateBlockSizeGraph("write", "1", "throughput_MiBs")
+        plot.generateBlockSizeGraph("write", "8", "throughput_MiBs")
+        plot.generateBlockSizeGraph("randwrite", "1", "throughput_MiBs")
+        plot.generateBlockSizeGraph("randwrite", "8", "throughput_MiBs")
+        plot.generateBlockSizeGraph("read", "1", "throughput_MiBs")
+        plot.generateBlockSizeGraph("randread", "1", "throughput_MiBs")
+
+        plot.generateBlockSizeGraph("write", "1", "avg_lat_us")
+        plot.generateBlockSizeGraph("write", "8", "avg_lat_us")
+        plot.generateBlockSizeGraph("randwrite", "8", "avg_lat_us")
+        plot.generateBlockSizeGraph("randwrite", "1", "avg_lat_us")
+        plot.generateBlockSizeGraph("read", "1", "avg_lat_us")
+        plot.generateBlockSizeGraph("randread", "1", "avg_lat_us")
+
+        plot.generateBarGraph("read", "throughput_MiBs")
+        plot.generateBarGraph("write", "throughput_MiBs")
+        plot.generateBarGraph("randread", "throughput_MiBs")
+        plot.generateBarGraph("readwrite", "throughput_MiBs")
+
+        plot.generateBarGraph("read", "avg_lat_us")
+        plot.generateBarGraph("write", "avg_lat_us")
+        plot.generateBarGraph("randread", "avg_lat_us")
+        plot.generateBarGraph("randwrite", "avg_lat_us")
+
+        print("  Done generateing graphs")
 
 base_benches.append(Run())
 

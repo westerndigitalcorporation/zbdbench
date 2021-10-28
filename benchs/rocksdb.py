@@ -218,12 +218,15 @@ class RocksDBReadwhilewriting(RocksDBBase):
             w = csv.writer(f, delimiter=',')
             w.writerow(('readwhilewriting_' + file_bench, micros, ops, mbs))
 
+        return csv_file
+
     def report(self, path):
         self.report_bench(path, 'readrandom', 'readrandom')
         self.report_bench(path, 'write', 'readwhilewriting')
-        self.report_bench(path, 'writelimit', 'readwhilewriting')
+        csv_file = self.report_bench(path, 'writelimit', 'readwhilewriting')
 
-        print("  Output written to: %s" % (path + '/rocksdb.csv'))
+        print("  Output written to: %s" % (csv_file))
+        return csv_file
 
 # Fill must be first, as it initialized zenfs
 base_benches.append(RocksDBFillPrep())

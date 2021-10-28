@@ -1,6 +1,9 @@
 import subprocess
 import re
 import sys
+import csv
+import os
+import matplotlib.pyplot as plt
 
 # Global list of available benchmarks
 base_benches = []
@@ -25,6 +28,9 @@ class Bench(object):
 
     def report(self, path):
         print("Not implemented (report)")
+
+    def plot(self, csv_file):
+        print("Not implemented (plot)")
 
     # Helpers
     def docker_sys_cmd(self, dev):
@@ -113,6 +119,79 @@ class Bench(object):
 #            sys.exit(1)
 
         subprocess.call(cmd, shell=True)
+
+# Generic Plot class that supplies rudimentary matplotlib helper functions
+class Plot(object):
+
+    def __init__(self, csv_file):
+        self.csv_file = csv_file
+        with open(self.csv_file, 'r') as f:
+            d_reader = csv.DictReader(f)
+            self.header = d_reader.fieldnames
+        self.output_dir = os.path.dirname(os.path.abspath(csv_file))
+
+    def resetPlot(self):
+        plt.cla()
+        plt.clf()
+        plt.close()
+
+    def saveInOutputDir(self, name):
+        plt.savefig(os.path.join(self.output_dir, name), bbox_inches="tight")
+
+    def getGenericLabel(self, row_dict, row_items):
+        label = ""
+        keys = list(row_dict.keys())
+        values = list(row_dict.values())
+        for item in row_items:
+            label += str(str(keys[item]) + str(values[item]) + "_")
+        return (label[:-1])
+
+    def setupGenericBarGraph(self, filter_dict, value_of_interest, label_row_items, comparison_csv_file="", figure_size=()):
+        self.resetPlot()
+        benchmark_rows = csv.DictReader(open(self.csv_file))
+        y_values = []
+        x_ticks = []
+        x_values = []
+        i = 1
+        for row in benchmark_rows:
+            row_passes_filter = True
+            for key, values in filter_dict.items():
+                if str(row[key]) not in [str(value) for value in values]:
+                    row_passes_filter = False
+                    break
+
+            if row_passes_filter:
+                y_values.append(float(row[value_of_interest]))
+                x_ticks.append(self.getGenericLabel(row, label_row_items))
+                x_values.append(i)
+                i += 1
+        if len(figure_size) > 0:
+            plt.figure(figsize=figure_size)
+        plt.xticks(x_values, x_ticks, rotation=90)
+
+        if not comparison_csv_file:
+            plt.bar(x_values, y_values, width=0.2, zorder=3, label=self.csv_file)
+        else:
+            comparision_benchmark_rows = csv.DictReader(open(comparison_csv_file))
+            comparison_y_values = []
+            i = 0
+            for row in comparision_benchmark_rows:
+                row_passes_filter = True
+                for key, values in filter_dict.items():
+                    if str(row[key]) not in [str(value) for value in values]:
+                        row_passes_filter = False
+                        break
+
+                if row_passes_filter:
+                    comparison_y_values.append(float(row[value_of_interest]))
+                    if x_ticks[i] != self.getGenericLabel(row, label_row_items):
+                        print("The sorting of the comparision csv does not line up!")
+                        exit(1)
+                    i += 1
+
+            plt.bar([x - 0.1 for x in x_values], y_values, width=0.2, zorder=3, label=self.csv_file)
+            plt.bar([x + 0.1 for x in x_values], comparison_y_values, width=0.2, zorder=3, label=comparison_csv_file)
+            plt.legend()
 
 # Helper functions shared by scripts
 def is_dev_zoned(dev):

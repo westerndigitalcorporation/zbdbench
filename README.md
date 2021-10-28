@@ -38,6 +38,9 @@ environment, the script requires the following installed:
      sudo docker images zrocksdb
      sudo docker images zzenfs
 
+  - matplotlib (e.g. through pip3)
+      https://matplotlib.org/stable/users/installing.html
+
 Getting Started
 ---------------
 
@@ -88,9 +91,13 @@ Run all benchmarks:
 
     ./run.py -d /dev/nvmeXnY
 
-Regenerate a report
+Regenerate a report (and its plots)
 
     ./run.py -b fio_zone_mixed -r output/YYYYMMDDHHMMSS
+
+Regenerate plots from existing csv report
+
+    ./run.py -b fio_zone_throughput_avg_lat -p output/YYYYMMDDHHMMSS/fio_zone_throughput_avg_lat.csv
 
 Benchmarks
 ----------
@@ -142,3 +149,21 @@ fio_zone_randr_seqw_seqr_rrsw
     *NOTE: For workload 3, the read and write percentiles are reported
            seperately in 2 lines in the csv.
 
+fio_zone_throughput_avg_lat
+  - Executes all combinations of the following workloads twice and averages
+    the throughput and latency in the csv report:
+      - Read/write
+      - Seq/Random
+      - BS: 4K, 8K, 16K, 64K, 128K
+      - max_open_zone: 1, 2, 4, 8, 12 (only for writes)
+      - QD: 1, 2, 4, 8 (skipping QD's > max_open_zones)
+
+    For reads the drive is prepared with a write. The ZBD is reset before each
+    run.
+
+  - Generated csv output file is fio_zone_throughput_avg_lat.csv
+    1. avg_lat_us: Average latency in µs for the specific run.
+    2. throughput_MiBs: Throughput in MiBs for the specific run.
+    3. clat_p1_us - clat_p100us: completion latency percentiles in µs.
+
+  - Generates multiple graphs that plot the behavior of throughput and latency.
