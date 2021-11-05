@@ -9,8 +9,6 @@ from datetime import datetime
 from benchs.base import base_benches, is_dev_zoned
 from benchs import *
 
-run_output_relative = "output/%s" % (datetime.now().strftime("%Y%m%d%H%M%S"))
-run_output = "%s/%s" % (os.getcwd(), run_output_relative)
 
 def check_dev_mounted(dev):
     with open('/proc/mounts','r') as f:
@@ -82,25 +80,18 @@ def check_missing_programs(container):
 
     print("Check OK: All executables available")
 
-def create_dirs():
-    if not os.path.isdir('output'):
-        try:
-            os.mkdir('output')
-        except OSError:
-            print("Not able to create output directory. Exiting...")
-            sys.exit(1)
-
+def create_dirs(run_output):
     if os.path.isdir(run_output):
         print("Output directory (%s) already exists. Exiting..." % run_output)
         sys.exit(1)
 
     try:
-        os.mkdir(run_output)
+        os.makedirs(run_output)
     except OSError:
         print("Not able to create output directory. Exiting...")
         sys.exit(1)
 
-def collect_info(dev):
+def collect_info(dev, run_output):
     subprocess.call("nvme id-ctrl -H %s > %s/nvme_id-ctrl.txt" % (dev, run_output), shell=True)
     subprocess.call("nvme id-ns -H %s > %s/nvme_id-ns.txt" % (dev, run_output), shell=True)
 
@@ -113,7 +104,7 @@ def list_benchs(benches):
     for b in benches:
         print("  " + b.id())
 
-def run_benchmarks(dev, container, benches):
+def run_benchmarks(dev, container, benches, run_output):
     if not dev:
         print('No device name provided for benchmark')
         print('ex. run.py /dev/nvmeXnY')
@@ -128,9 +119,9 @@ def run_benchmarks(dev, container, benches):
 
     list_benchs(benches)
 
-    create_dirs()
+    create_dirs(run_output)
 
-    collect_info(dev)
+    collect_info(dev, run_output)
 
     print("\nDev: %s" % dev)
     print("Env: %s" % container)
@@ -189,20 +180,36 @@ def main(argv):
     dev = ''
     container = 'docker'
     try:
-        opts, args = getopt.getopt(argv, "hd:c:r:p:b:l", ["dev=", "container=", "report", "plot=","benchmark=", "list_benchmarks"])
+        opts, args = getopt.getopt(
+            argv,
+            "hd:c:r:p:b:lo:",
+            [
+                "dev=",
+                "container=",
+                "report",
+                "plot=",
+                "benchmark=",
+                "list_benchmarks",
+                "output",
+            ]
+        )
     except getopt.GetoptError:
         print_help()
         sys.exit(2)
 
     run = ''
     benches = base_benches
+    output_path = os.getcwd()
+
     for opt, arg in opts:
         if opt in ('-p', "--plot="):
             run = 'plot'
             csv_file = arg
+
         if opt in ('-r', "--report="):
             run = 'report'
             report_path = arg
+
         if opt in ("-d", "--dev"):
             run = 'bench'
             dev = arg
@@ -218,6 +225,7 @@ def main(argv):
         if opt in ('-l', '--list_benchmarks'):
             list_benchs(base_benches)
             sys.exit()
+
         if opt in ('-b', '--benchmark'):
             benches = [next((x for x in benches if x.id() == arg), None)]
 
@@ -226,12 +234,20 @@ def main(argv):
                 list_benchs(base_benches)
                 sys.exit(1)
 
+        if opt in ('-o', '--output'):
+            output_path = arg
+
+    run_output_relative = "zbdbench_results/%s" % (datetime.now().strftime("%Y%m%d%H%M%S"))
+    run_output = "%s/%s" % (output_path, run_output_relative)
+
+    print(f"Output directory: {run_output}")
+
     if run == 'plot':
         run_plots(csv_file, benches)
     elif run == 'report':
         run_reports(report_path, benches)
     elif run == 'bench':
-        run_benchmarks(dev, container, benches)
+        run_benchmarks(dev, container, benches, run_output)
     else:
         print_help()
 
