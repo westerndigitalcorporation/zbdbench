@@ -21,6 +21,12 @@ class Run(Bench):
 
         self.discard_dev(dev)
 
+    def required_host_tools(self):
+        return super().required_host_tools() |  {'some_tool'}
+
+    def required_container_tools(self):
+        return super().required_container_tools() |  {'some_tool'}
+
     def run(self, dev, container):
         bdev = self.sys_container_dev(dev, container)
         fio_params = "fio_params"

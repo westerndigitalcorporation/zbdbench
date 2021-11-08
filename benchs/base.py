@@ -36,6 +36,12 @@ class Bench(object):
     def docker_sys_cmd(self, dev):
         return "docker run -v \"%s:%s\" -v \"%s:/output\" --privileged=true" % (dev, dev, self.output)
 
+    def required_host_tools(self):
+        return {'blkzone', 'blkdiscard'}
+
+    def required_container_tools(self):
+        return set()
+
     def sys_cmd(self, tool, dev, container):
         exec_cmd = tool
         container_cmd = ''

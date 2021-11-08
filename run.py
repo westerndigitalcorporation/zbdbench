@@ -58,26 +58,24 @@ def check_dev_zoned(dev):
     else:
         print("Check OK: %s is a conventional block device" % dev)
 
-def check_missing_programs(container):
-    if not distutils.spawn.find_executable("blkzone"):
-        print("Check FAIL: blkzone not available")
-        sys.exit(1)
+def check_missing_programs(container, benchmarks):
 
-    if not distutils.spawn.find_executable("blkdiscard"):
-        print("Check FAIL: blkdiscard not available")
-        sys.exit(1)
+    host_tools = {'nvme'}
+    container_tools = set()
 
-    if not distutils.spawn.find_executable("nvme"):
-        print("Check FAIL: nvme not available")
-        sys.exit(1)
-
+    for benchmark in benchmarks:
+        host_tools |= benchmark.required_host_tools()
+        container_tools |= benchmark.required_container_tools()
+    
     if "system" in container:
-        if not distutils.spawn.find_executable("fio"):
-            print("Check FAIL: fio not available")
-            sys.exit(1)
+        host_tools |= container_tools
     else:
-        if not distutils.spawn.find_executable("docker"):
-            print("Check FAIL: docker not available")
+        host_tools.add('docker')
+
+    print(f"Required host tools: {host_tools}")
+    for tool in host_tools:
+        if not distutils.spawn.find_executable(tool):
+            print(f"Check FAIL: {tool} not available")
             sys.exit(1)
 
     print("Check OK: All executables available")
@@ -117,7 +115,7 @@ def run_benchmarks(dev, container, benches, run_output):
     check_dev_mounted(dev)
     check_and_set_scheduler(dev)
     check_dev_zoned(dev)
-    check_missing_programs(container)
+    check_missing_programs(container, benches)
 
     list_benchs(benches)
 
