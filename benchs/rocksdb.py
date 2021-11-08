@@ -41,6 +41,12 @@ class RocksDBBase(Bench):
 
     write_limit = str(1024 * 1024 * 20) # 20MB/s
 
+    def required_container_tools(self):
+        return super().required_container_tools() | {
+            'zenfs',
+            'db_bench',
+        }
+
     def get_target_fz_base(self, dev):
         zonecap = self.get_zone_capacity_mb(dev)
         return str(int(zonecap * 95 / 100) * 1024 * 1024)

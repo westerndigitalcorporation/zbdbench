@@ -110,6 +110,9 @@ class Run(Bench):
 
         self.discard_dev(dev)
 
+    def required_container_tools(self):
+        return super().required_container_tools() |  {'fio'}
+
     def run(self, dev, container):
         extra = ''
 
