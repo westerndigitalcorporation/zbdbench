@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
-import sys, getopt
+import sys
 import subprocess
 import os
 import re
 import distutils.spawn
+import argparse
+
 from datetime import datetime
 from benchs.base import base_benches, is_dev_zoned
 from benchs import *
@@ -176,66 +178,58 @@ def print_help():
     print('    run.py -d /dev/nvmeXnY')
 
 def main(argv):
+    benchmark_names = [x.id() for x in base_benches]
+    parser = argparse.ArgumentParser(description = 'Zoned Block Device Benchmark Tool', add_help=False)
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--dev', '-d', default='', type=str, help='Path to block device used for test')
+    group.add_argument('--report', '-r', type=str, metavar='PATH', help='Generate reports')
+    group.add_argument('--plot', '-p', type=str, metavar='OUTPUT_CSV', help='Generate plots')
+    group.add_argument('--list-benchmarks', '-l', action='store_true', help='List available benchmarks')
+    group.add_argument('--help', '-h', action='store_true', help='Print help message and exit')
+    parser.add_argument('--container', '-c', type=str, default='docker', choices=['docker', 'system'], help='Use containerized binaries (docker) or system binaries (system)')
+    parser.add_argument('--benchmarks', '-b', type=str, nargs='+', metavar='NAME', help='Benchmarks to run')
+    parser.add_argument('--output', '-o', type=str, default=os.getcwd(), help='Directory to place results. Will be created if it does not exist')
+    args = parser.parse_args()
 
-    dev = ''
-    container = 'docker'
-    try:
-        opts, args = getopt.getopt(
-            argv,
-            "hd:c:r:p:b:lo:",
-            [
-                "dev=",
-                "container=",
-                "report",
-                "plot=",
-                "benchmark=",
-                "list_benchmarks",
-                "output",
-            ]
-        )
-    except getopt.GetoptError:
-        print_help()
-        sys.exit(2)
-
-    run = ''
+    dev = args.dev
+    container = args.container
+    output_path = args.output
     benches = base_benches
-    output_path = os.getcwd()
+    run = ''
 
-    for opt, arg in opts:
-        if opt in ('-p', "--plot="):
-            run = 'plot'
-            csv_file = arg
+    if args.help:
+        parser.print_help()
+        print()
+        print_help()
+        sys.exit()
 
-        if opt in ('-r', "--report="):
-            run = 'report'
-            report_path = arg
+    if args.plot != None:
+        run = 'plot'
+        csv_file = args.plot
 
-        if opt in ("-d", "--dev"):
-            run = 'bench'
-            dev = arg
+    if args.report != None:
+        run = 'report'
+        report_path = args.report
+    
+    if args.dev != None:
+        run = 'bench'
+        dev = args.dev
+            
+    if args.list_benchmarks:
+        list_benchs(base_benches)
+        sys.exit()
 
-        if opt in ('-c', "--container"):
-            if arg == 'system':
-                container = arg
-
-        if opt == '-h':
-            print_help()
-            sys.exit()
-
-        if opt in ('-l', '--list_benchmarks'):
-            list_benchs(base_benches)
-            sys.exit()
-
-        if opt in ('-b', '--benchmark'):
-            benches = [next((x for x in benches if x.id() == arg), None)]
-
-            if benches[0] is None:
-                print("Benchmark not found: %s\n" % arg)
+    if args.benchmarks:
+        for name in args.benchmarks:
+            if name not in benchmark_names:
+                print(f"Invalid benchmark name: {name}")
                 list_benchs(base_benches)
                 sys.exit(1)
 
-        if opt in ('-o', '--output'):
-            output_path = arg
+        benches = [x for x in base_benches if x.id() in args.benchmarks]
+        if len(benches) == 0:
+            list_benchs(base_benches)
+            sys.exit(1)
 
     run_output_relative = "zbdbench_results/%s" % (datetime.now().strftime("%Y%m%d%H%M%S"))
     run_output = "%s/%s" % (output_path, run_output_relative)
