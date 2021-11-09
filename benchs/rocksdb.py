@@ -110,7 +110,7 @@ class RocksDBFillPrep(RocksDBBase):
         self.discard_dev(dev)
 
         devname = dev.strip('/dev/')
-        self.run_cmd(dev, container, 'zenfs', 'mkfs --zbd=%s --finish_threshold=20 --aux_path=/output/' % devname)
+        self.run_cmd(dev, container, 'zenfs', f'mkfs --zbd={devname} --finish_threshold=20 --aux_path=/tmp/zenfs_aux')
 
     def run(self, dev, container):
         num = str(self.scale_num)
