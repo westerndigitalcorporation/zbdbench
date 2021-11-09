@@ -228,7 +228,7 @@ def main(argv):
             list_benchs(base_benches)
             sys.exit(1)
 
-    run_output_relative = "zbdbench_results/%s" % (datetime.now().strftime("%Y%m%d%H%M%S"))
+    run_output_relative = datetime.now().strftime("%Y-%m-%d-%H%M%S")
     run_output = "%s/%s" % (output_path, run_output_relative)
 
     print(f"Output directory: {run_output}")
