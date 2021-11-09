@@ -118,9 +118,9 @@ class Bench(object):
 #            sys.exit(1)
 
         if is_dev_zoned(dev):
-            subprocess.call("blkzone reset %s" % dev, shell=True)
+            subprocess.check_call("blkzone reset %s" % dev, shell=True)
         else:
-            subprocess.call("blkdiscard %s" % dev, shell=True)
+            subprocess.check_call("blkdiscard %s" % dev, shell=True)
 
     def run_cmd(self, dev, container, tool, tool_params):
         cmd = "%s %s" % (self.sys_cmd(tool, dev, container), tool_params)
@@ -131,7 +131,7 @@ class Bench(object):
 #        if v != 'y':
 #            sys.exit(1)
 
-        subprocess.call(cmd, shell=True)
+        subprocess.check_call(cmd, shell=True)
 
 # Generic Plot class that supplies rudimentary matplotlib helper functions
 class Plot(object):
