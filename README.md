@@ -2,6 +2,16 @@
 
 ZBDBench is a collection of benchmarks for zoned storage devices that tests both the raw performance of the device, and runs standard benchmarks for applications such as RocksDB (dbbench) and MySQL (sysbench).
 
+Community
+---------
+For help or questions about zbdbench usage (e.g. "how do I do X?") see below, on join us on [Matrix](https://app.element.io/#/room/#zonedstorage-general:matrix.org), or on [Slack](https://join.slack.com/t/zonedstorage/shared_invite/zt-uyfut5xe-nKajp9YRnEWqiD4X6RkTFw).
+
+To report a bug, file a documentation issue, or submit a feature request, please open a GitHub issue.
+
+For release announcements and other discussions, please subscribe to this repository or join us on Matrix.
+
+![Matrix](https://img.shields.io/matrix/zonedstorage-community:matrix.org?label=Matrix)
+
 Getting Started
 ---------------
 
