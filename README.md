@@ -1,50 +1,11 @@
-# zbdbench: benchmark zoned block devices
+# ZBDBench: Benchmark Suite for ZNS SSDs and SMR HDDs
 
-Dependencies
-------------
-
-The benchmark tool requires Python 3.4+. In addition to a working python
-environment, the script requires the following installed:
-
- - Linux kernel 5.9 or newer
-   - Check your loaded kernel version using:
-     uname -a
-
- - nvme-cli (apt-get install nvme-cli)
-   - Ubuntu: sudo apt-get install nvme-cli
-   - Fedora: sudo dnf -y install nvme-cli
-
- - blkzone (available through util-linux)
-   - Ubuntu: sudo apt-get install util-linux
-   - Fedora: sudo dnf -y install util-linux-ng
-   - CentOS: sudo yum -y install util-linux-ng
-
- - a valid docker environment
-   - If you do not have a docker environment installed, please see:
-     - Ubuntu: https://docs.docker.com/engine/install/ubuntu/
-     - Fedora: https://docs.docker.com/engine/install/fedora/
-     - Centos: https://docs.docker.com/engine/install/centos/
-
- - installed docker containers:
-   - zfio - contains latest fio compiled with zone capacity support
-   - zrocksdb - contains rocksdb with zenfs built-in
-   - zzenfs - contains the zenfs tool to inspect the zenfs file-system
-
-   The container can be installed with:
-     cd recipes/docker; sudo ./build.sh
-
-   The container installation can be verified by listing the docker image:
-     sudo docker images zfio
-     sudo docker images zrocksdb
-     sudo docker images zzenfs
-
-  - matplotlib (e.g. through pip3)
-      https://matplotlib.org/stable/users/installing.html
+ZBDBench is a collection of benchmarks for zoned storage devices that tests both the raw performance of the device, and runs standard benchmarks for applications such as RocksDB (dbbench) and MySQL (sysbench).
 
 Getting Started
 ---------------
 
-The run.py script runs a set of predefined benchmarks on a block device.
+The run.py script runs a set of predefined benchmarks on a block device. Required dependencies are described at the bottom.
 
 The block device does not have to be zoned - the workloads will work
 on both types of block devices.
@@ -167,3 +128,44 @@ fio_zone_throughput_avg_lat
     3. clat_p1_us - clat_p100us: completion latency percentiles in µs.
 
   - Generates multiple graphs that plot the behavior of throughput and latency.
+
+Dependencies
+------------
+
+The benchmark tool requires Python 3.4+. In addition to a working python
+environment, the script requires the following installed:
+
+ - Linux kernel 5.9 or newer
+   - Check your loaded kernel version using:
+     uname -a
+
+ - nvme-cli (apt-get install nvme-cli)
+   - Ubuntu: sudo apt-get install nvme-cli
+   - Fedora: sudo dnf -y install nvme-cli
+
+ - blkzone (available through util-linux)
+   - Ubuntu: sudo apt-get install util-linux
+   - Fedora: sudo dnf -y install util-linux-ng
+   - CentOS: sudo yum -y install util-linux-ng
+
+ - a valid docker environment
+   - If you do not have a docker environment installed, please see:
+     - Ubuntu: https://docs.docker.com/engine/install/ubuntu/
+     - Fedora: https://docs.docker.com/engine/install/fedora/
+     - Centos: https://docs.docker.com/engine/install/centos/
+
+ - installed docker containers:
+   - zfio - contains latest fio compiled with zone capacity support
+   - zrocksdb - contains rocksdb with zenfs built-in
+   - zzenfs - contains the zenfs tool to inspect the zenfs file-system
+
+   The container can be installed with:
+     cd recipes/docker; sudo ./build.sh
+
+   The container installation can be verified by listing the docker image:
+     sudo docker images zfio
+     sudo docker images zrocksdb
+     sudo docker images zzenfs
+
+  - matplotlib (e.g. through pip3)
+      https://matplotlib.org/stable/users/installing.html
