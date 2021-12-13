@@ -39,6 +39,9 @@ class BenchPlot(Plot):
         y_values_QD2 = []
         y_values_QD4 = []
         y_values_QD8 = []
+        y_values_QD16 = []
+        y_values_QD32 = []
+        y_values_QD64 = []
 
         x_ticks = ["4", "8", "16", "64", "128"]
         x_values = [4, 8, 16, 64, 128]
@@ -52,6 +55,12 @@ class BenchPlot(Plot):
                     y_values_QD4.append(int(row[value_of_interest]))
                 elif row['queue_depth'] == "8":
                     y_values_QD8.append(int(row[value_of_interest]))
+                elif row['queue_depth'] == "16":
+                    y_values_QD16.append(int(row[value_of_interest]))
+                elif row['queue_depth'] == "32":
+                    y_values_QD32.append(int(row[value_of_interest]))
+                elif row['queue_depth'] == "64":
+                    y_values_QD64.append(int(row[value_of_interest]))
 
         plt.figure(figsize=(20,9))
         plt.xticks(x_values, x_ticks)
@@ -59,10 +68,20 @@ class BenchPlot(Plot):
         if "write" in operation:
             label_additions = str(", max_open_zones=%s" % max_open_zones)
 
-        plt.plot(x_values, y_values_QD1, '-mo', label=("QD=1%s" % label_additions) )
-        plt.plot(x_values, y_values_QD2, '-gs', label=("QD=2%s" % label_additions) )
-        plt.plot(x_values, y_values_QD4, '-yv', label=("QD=4%s" % label_additions) )
-        plt.plot(x_values, y_values_QD8, '-bd', label=("QD=8%s" % label_additions) )
+        if len(y_values_QD1) == len(x_values):
+            plt.plot(x_values, y_values_QD1, '-mo', label=("QD=1%s" % label_additions) )
+        if len(y_values_QD2) == len(x_values):
+            plt.plot(x_values, y_values_QD2, '-gs', label=("QD=2%s" % label_additions) )
+        if len(y_values_QD4) == len(x_values):
+            plt.plot(x_values, y_values_QD4, '-yv', label=("QD=4%s" % label_additions) )
+        if len(y_values_QD8) == len(x_values):
+            plt.plot(x_values, y_values_QD8, '-bd', label=("QD=8%s" % label_additions) )
+        if len(y_values_QD16) == len(x_values):
+            plt.plot(x_values, y_values_QD16, '-rx', label=("QD=16%s" % label_additions) )
+        if len(y_values_QD32) == len(x_values):
+            plt.plot(x_values, y_values_QD32, '-c8', label=("QD=32%s" % label_additions) )
+        if len(y_values_QD64) == len(x_values):
+            plt.plot(x_values, y_values_QD64, '-k4', label=("QD=64%s" % label_additions) )
         plt.legend()
         plt.xlabel("Block Size [KiB]")
 
@@ -131,8 +150,8 @@ class Run(Bench):
                 print("Finished preping the drive")
 
             for max_open_zones in max_open_zones_list:
-                for queue_depth in [1, 2, 4, 8]:
-                    if queue_depth > max_open_zones:
+                for queue_depth in [1, 2, 4, 8, 16, 32, 64]:
+                    if max_open_zones > queue_depth:
                         continue
 
                     for block_size in ["4K", "8K", "16K", "64K", "128K"]:
