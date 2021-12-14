@@ -2,6 +2,7 @@ import json
 import csv
 import sys
 import glob
+import re
 import matplotlib.pyplot as plt
 from .base import base_benches, Bench, Plot
 from benchs.base import is_dev_zoned
@@ -35,23 +36,33 @@ class BenchPlot(Plot):
     def generateBlockSizeGraph(self, operation, max_open_zones, value_of_interest):
         self.resetPlot()
         benchmarkRows = csv.DictReader(open(self.csv_file))
-        y_values_QD1 = []
-        y_values_QD2 = []
-        y_values_QD4 = []
-        y_values_QD8 = []
 
         x_ticks = ["4", "8", "16", "64", "128"]
         x_values = [4, 8, 16, 64, 128]
+
+        y_values_QD1 = [-1] * len(x_ticks)
+        y_values_QD2 = [-1] * len(x_ticks)
+        y_values_QD4 = [-1] * len(x_ticks)
+        y_values_QD8 = [-1] * len(x_ticks)
+        y_values_QD16 = [-1] * len(x_ticks)
+        y_values_QD32 = [-1] * len(x_ticks)
+        y_values_QD64 = [-1] * len(x_ticks)
         for row in benchmarkRows:
             if row['operation'] == operation and row['max_open_zones'] == max_open_zones:
                 if row['queue_depth'] == "1":
-                    y_values_QD1.append(int(row[value_of_interest]))
+                    y_values_QD1[x_ticks.index(row['block_size_K'])] = int(row[value_of_interest])
                 elif row['queue_depth'] == "2":
-                    y_values_QD2.append(int(row[value_of_interest]))
+                    y_values_QD2[x_ticks.index(row['block_size_K'])] = int(row[value_of_interest])
                 elif row['queue_depth'] == "4":
-                    y_values_QD4.append(int(row[value_of_interest]))
+                    y_values_QD4[x_ticks.index(row['block_size_K'])] = int(row[value_of_interest])
                 elif row['queue_depth'] == "8":
-                    y_values_QD8.append(int(row[value_of_interest]))
+                    y_values_QD8[x_ticks.index(row['block_size_K'])] = int(row[value_of_interest])
+                elif row['queue_depth'] == "16":
+                    y_values_QD16[x_ticks.index(row['block_size_K'])] = int(row[value_of_interest])
+                elif row['queue_depth'] == "32":
+                    y_values_QD32[x_ticks.index(row['block_size_K'])] = int(row[value_of_interest])
+                elif row['queue_depth'] == "64":
+                    y_values_QD64[x_ticks.index(row['block_size_K'])] = int(row[value_of_interest])
 
         plt.figure(figsize=(20,9))
         plt.xticks(x_values, x_ticks)
@@ -59,10 +70,20 @@ class BenchPlot(Plot):
         if "write" in operation:
             label_additions = str(", max_open_zones=%s" % max_open_zones)
 
-        plt.plot(x_values, y_values_QD1, '-mo', label=("QD=1%s" % label_additions) )
-        plt.plot(x_values, y_values_QD2, '-gs', label=("QD=2%s" % label_additions) )
-        plt.plot(x_values, y_values_QD4, '-yv', label=("QD=4%s" % label_additions) )
-        plt.plot(x_values, y_values_QD8, '-bd', label=("QD=8%s" % label_additions) )
+        if -1 not in y_values_QD1:
+            plt.plot(x_values, y_values_QD1, '-mo', label=("QD=1%s" % label_additions) )
+        if -1 not in y_values_QD2:
+            plt.plot(x_values, y_values_QD2, '-gs', label=("QD=2%s" % label_additions) )
+        if -1 not in y_values_QD4:
+            plt.plot(x_values, y_values_QD4, '-yv', label=("QD=4%s" % label_additions) )
+        if -1 not in y_values_QD8:
+            plt.plot(x_values, y_values_QD8, '-bd', label=("QD=8%s" % label_additions) )
+        if -1 not in y_values_QD16:
+            plt.plot(x_values, y_values_QD16, '-rx', label=("QD=16%s" % label_additions) )
+        if -1 not in y_values_QD32:
+            plt.plot(x_values, y_values_QD32, '-c8', label=("QD=32%s" % label_additions) )
+        if -1 not in y_values_QD64:
+            plt.plot(x_values, y_values_QD64, '-k4', label=("QD=64%s" % label_additions) )
         plt.legend()
         plt.xlabel("Block Size [KiB]")
 
@@ -131,8 +152,8 @@ class Run(Bench):
                 print("Finished preping the drive")
 
             for max_open_zones in max_open_zones_list:
-                for queue_depth in [1, 2, 4, 8]:
-                    if queue_depth > max_open_zones:
+                for queue_depth in [1, 2, 4, 8, 16, 32, 64]:
+                    if max_open_zones > queue_depth:
                         continue
 
                     for block_size in ["4K", "8K", "16K", "64K", "128K"]:
@@ -226,7 +247,8 @@ class Run(Bench):
                     csv_row.append(options[0])
                     csv_row.append(globalOptions['max_open_zones'])
                     csv_row.append(globalOptions['iodepth'])
-                    csv_row.append(globalOptions['bs'])
+                    #Cut SI prefix from bs for further processing
+                    csv_row.append(re.sub('[a-zA-Z]', '', globalOptions['bs']))
                     csv_row.append(avg_lat_us)
                     csv_row.append(throughput)
                     csv_row.append(p0)
