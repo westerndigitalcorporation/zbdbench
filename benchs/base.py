@@ -105,6 +105,14 @@ class Bench(object):
 
         return int(zonecap * bs / 1024 / 1024)
 
+    def get_drive_size_gb(self, path):
+        filename = path + "/nvme_id-ns.txt"
+        with open(filename, 'r') as f:
+            for l in f:
+                if 'nvmcap' in l:
+                    return int(int(l.strip("nvmcap  : ")) / 1024 / 1024 / 1024)
+        return None
+
     def discard_dev(self, dev):
 #        v = raw_input('Do you want to discard (y/N)?')
 #        if v != 'y':
