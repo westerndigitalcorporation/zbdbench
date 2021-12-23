@@ -105,7 +105,7 @@ class Bench(object):
 
         return int(zonecap * bs / 1024 / 1024)
 
-    def get_drive_size_gb(self, path):
+    def get_nvme_drive_capacity_gb(self, path):
         filename = path + "/nvme_id-ns.txt"
         with open(filename, 'r') as f:
             for l in f:
