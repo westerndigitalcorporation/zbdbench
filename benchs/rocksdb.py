@@ -72,14 +72,6 @@ class RocksDBBase(Bench):
 
         return ''.join(params)
 
-    def get_drive_size_gb(self, path):
-        filename = path + "/nvme_id-ns.txt"
-        with open(filename, 'r') as f:
-            for l in f:
-                if 'nvmcap' in l:
-                    return int(l.strip("nvmcap  : ")) / 1024 / 1024 / 1024
-        return None
-
     def create_csv_file(self, filename):
         try:
             with open(filename, 'x') as f:
