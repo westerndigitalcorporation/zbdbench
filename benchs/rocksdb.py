@@ -91,9 +91,9 @@ class RocksDBBase(Bench):
                 return [i for i in line.split(' ') if i]
 
     def report(self, path):
-        devsize = self.get_drive_size_gb(path)
-        if devsize is None:
-            print("Could not get drive size for report")
+        devcap = self.get_nvme_drive_capacity_gb(path)
+        if devcap is None:
+            print("Could not get drive capacity for report")
             sys.exit(1)
 
         print("  Output written to: ")

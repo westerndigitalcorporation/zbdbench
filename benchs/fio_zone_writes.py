@@ -52,9 +52,9 @@ class Run(Bench):
 
     def report(self, path):
 
-        devsize = self.get_drive_size_gb(path)
-        if devsize is None:
-            print("Could not get drive size for report")
+        devcap = self.get_nvme_drive_capacity_gb(path)
+        if devcap is None:
+            print("Could not get drive capacity for report")
             sys.exit(1)
 
         dp = []
@@ -66,8 +66,8 @@ class Run(Bench):
             for n in data:
                 dy.append(int(n[1]) / 1024)
 
-        ds = range(0, devsize)
-        sum_max = sum(dy) / devsize
+        ds = range(0, devcap)
+        sum_max = sum(dy) / devcap
 
         spill = 0
         prev = 0
