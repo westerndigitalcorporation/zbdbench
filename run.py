@@ -60,7 +60,7 @@ def check_dev_zoned(dev):
 
 def check_missing_programs(container, benchmarks):
 
-    host_tools = {'nvme'}
+    host_tools = {'blkzone'}
     container_tools = set()
 
     for benchmark in benchmarks:
@@ -92,12 +92,11 @@ def create_dirs(run_output):
         sys.exit(1)
 
 def collect_info(dev, run_output):
-    subprocess.call("nvme id-ctrl -H %s > %s/nvme_id-ctrl.txt" % (dev, run_output), shell=True)
-    subprocess.call("nvme id-ns -H %s > %s/nvme_id-ns.txt" % (dev, run_output), shell=True)
+    subprocess.call(f"lsblk -b {dev} > lsblk-capacity.txt", shell=True)
 
     if is_dev_zoned(dev):
-        subprocess.call("nvme zns id-ns -H %s > %s/nvme_zns_id-ns.txt" % (dev, run_output), shell=True)
-        subprocess.call("nvme zns report-zones -H %s > %s/nvme_zns_report-zones.txt" % (dev, run_output), shell=True)
+        subprocess.call(f"blkzone capacity {dev} > {run_output}/blkzone-capacity.txt", shell=True)
+        subprocess.call(f"blkzone report {dev} > {run_output}/blkzone-report.txt", shell=True)
 
 def list_benchs(benches):
     print("\nBenchmarks:")

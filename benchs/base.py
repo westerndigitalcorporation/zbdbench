@@ -4,6 +4,7 @@ import sys
 import csv
 import os
 import matplotlib.pyplot as plt
+import fileinput
 
 # Global list of available benchmarks
 base_benches = []
@@ -71,47 +72,45 @@ class Bench(object):
         return (dev_size / 2)
 
     def get_number_of_zones(self, dev):
+        devname = dev.strip('/dev/')
         nr_zones = 0
-        with open('%s/nvme_zns_report-zones.txt' % (self.output), 'r') as f:
-            nr_zones = int(f.readline().strip('nr_zones: '))
-
+        with open(f"/sys/class/block/{devname}/queue/nr_zones", 'r') as f:
+            nr_zones = int(f.readline())
         return nr_zones
 
     def get_zone_size_mb(self, dev):
-       devname = dev.strip('/dev/')
-       zonesize = 0
+        devname = dev.strip('/dev/')
+        zonesize = 0
 
-       with open('/sys/block/%s/queue/chunk_sectors' % devname, 'r') as f:
-           zonesize = int(((int(f.readline()) * 512) / 1024) / 1024)
-       return zonesize
+        with open('/sys/block/%s/queue/chunk_sectors' % devname, 'r') as f:
+            zonesize = int(((int(f.readline()) * 512) / 1024) / 1024)
+
+        return zonesize
 
     def get_zone_capacity_mb(self, dev):
         devname = dev.strip('/dev/')
 
-        with open('%s/nvme_zns_report-zones.txt' % (self.output), 'r') as f:
-            f.readline() # first line is total number of zones
-            res = f.readline()
+        with open(f'{self.output}/blkzone-report.txt', 'r') as f:
+            capacity_blocks = int(f.readline().split()[5].strip(','), 0)
+            capacity_bytes = capacity_blocks * 512
+            capacity_mb = capacity_bytes / (1024^2)
 
-            m = re.search('Cap: 0[xX][0-9a-fA-F]+', res)
-
-            if m is None:
-                print("No zones reported to get zone capacity")
-                sys.exit(1)
-
-            zonecap = int(m.group().strip('Cap: '), 16)
-
-        with open('/sys/block/%s/queue/hw_sector_size' % devname, 'r') as f:
-            bs = int(f.readline())
-
-        return int(zonecap * bs / 1024 / 1024)
+        return capacity_mb
 
     def get_nvme_drive_capacity_gb(self, path):
-        filename = path + "/nvme_id-ns.txt"
-        with open(filename, 'r') as f:
-            for l in f:
-                if 'nvmcap' in l:
-                    return int(int(l.strip("nvmcap  : ")) / 1024 / 1024 / 1024)
-        return None
+        if is_dev_zoned(path):
+            filename = path + "/blkzone-capacity.txt"
+            with open(filename, 'r') as f:
+                size_blocks = int(f.read().strip(), 0)
+                size_bytes = size_blocks / 512
+                size_gb = size_bytes / (1024^3)
+                return size_gb
+        else:
+            filename = path + "/lsblk-capacity.txt"
+            lines = [l for l in fileinput.input(filename)]
+            size_bytes = lines[1].split()[3]
+            size_gb = size_bytes / (1024^3)
+            return size_gb
 
     def discard_dev(self, dev):
 #        v = raw_input('Do you want to discard (y/N)?')
