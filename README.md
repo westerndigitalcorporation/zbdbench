@@ -1,6 +1,6 @@
-# ZBDBench: Benchmark Suite for ZNS SSDs and SMR HDDs
+# ZBDBench: Benchmark Suite for Zoned Block Devices
 
-ZBDBench is a collection of benchmarks for zoned storage devices that tests both the raw performance of the device, and runs standard benchmarks for applications such as RocksDB (dbbench) and MySQL (sysbench).
+ZBDBench is a collection of benchmarks for zoned storage devices (Zoned Namespace (ZNS) SSDs and Shingled-Magnetic Recording (SMR) HDDs) that tests both the raw performance of the device, and runs standard benchmarks for applications such as RocksDB (dbbench) and MySQL (sysbench).
 
 Community
 ---------
