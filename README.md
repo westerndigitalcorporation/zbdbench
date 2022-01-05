@@ -126,8 +126,8 @@ fio_zone_throughput_avg_lat
       - Read/write
       - Seq/Random
       - BS: 4K, 8K, 16K, 64K, 128K
-      - max_open_zone: 1, 2, 4, 8, 12 (only for writes)
-      - QD: 1, 2, 4, 8 (skipping QD's > max_open_zones)
+      - max_open_zone: 1, 2, 4, 8, 14 (only for writes)
+      - QD: 1, 2, 4, 8, 14, 16, 32, 64 (for writes skipping QD's > max_open_zones and max_open_zones > QD)
 
     For reads the drive is prepared with a write. The ZBD is reset before each
     run.
