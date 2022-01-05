@@ -7,8 +7,13 @@ import matplotlib.pyplot as plt
 from .base import base_benches, Bench, Plot
 from benchs.base import is_dev_zoned
 
-class BenchPlot(Plot):
+operation_list = ["write", "randwrite", "read", "randread"]
+max_open_zones_list = [1, 2, 4, 8, 14]
+queue_depth_list = [1, 2, 4, 8, 14, 16, 32, 64] #attention when adjusting: hardcoded sections in generateBlockSizeGraph
+block_size_list = ["4K", "8K", "16K", "64K", "128K"]
+block_size_K_list = [str(x[:-1]) for x in block_size_list]
 
+class BenchPlot(Plot):
     def __init__(self, csv_file):
         super().__init__(csv_file)
         self.headline_additions = "All test runs where executed with the size of two times of the devices zone size.\nThe runs where executed twice, the reported numbers are averaged over these two runs."
@@ -33,22 +38,23 @@ class BenchPlot(Plot):
             plt.ylabel(value_of_interest)
             self.saveInOutputDir(("%s_%s.pdf" % (value_of_interest, operation)))
 
-    def generateBlockSizeGraph(self, operation, max_open_zones, value_of_interest):
+    def generateBlockSizeGraph(self, operation, max_open_zones_list, value_of_interest):
         self.resetPlot()
         benchmarkRows = csv.DictReader(open(self.csv_file))
 
-        x_ticks = ["4", "8", "16", "64", "128"]
-        x_values = [4, 8, 16, 64, 128]
+        x_ticks = block_size_K_list
+        x_values = [int(i) for i in x_ticks]
 
         y_values_QD1 = [-1] * len(x_ticks)
         y_values_QD2 = [-1] * len(x_ticks)
         y_values_QD4 = [-1] * len(x_ticks)
         y_values_QD8 = [-1] * len(x_ticks)
+        y_values_QD14 = [-1] * len(x_ticks)
         y_values_QD16 = [-1] * len(x_ticks)
         y_values_QD32 = [-1] * len(x_ticks)
         y_values_QD64 = [-1] * len(x_ticks)
         for row in benchmarkRows:
-            if row['operation'] == operation and row['max_open_zones'] == max_open_zones:
+            if row['operation'] == operation and row['max_open_zones'] in  max_open_zones_list:
                 if row['queue_depth'] == "1":
                     y_values_QD1[x_ticks.index(row['block_size_K'])] = int(row[value_of_interest])
                 elif row['queue_depth'] == "2":
@@ -57,6 +63,8 @@ class BenchPlot(Plot):
                     y_values_QD4[x_ticks.index(row['block_size_K'])] = int(row[value_of_interest])
                 elif row['queue_depth'] == "8":
                     y_values_QD8[x_ticks.index(row['block_size_K'])] = int(row[value_of_interest])
+                elif row['queue_depth'] == "14":
+                    y_values_QD14[x_ticks.index(row['block_size_K'])] = int(row[value_of_interest])
                 elif row['queue_depth'] == "16":
                     y_values_QD16[x_ticks.index(row['block_size_K'])] = int(row[value_of_interest])
                 elif row['queue_depth'] == "32":
@@ -64,11 +72,13 @@ class BenchPlot(Plot):
                 elif row['queue_depth'] == "64":
                     y_values_QD64[x_ticks.index(row['block_size_K'])] = int(row[value_of_interest])
 
-        plt.figure(figsize=(20,9))
+        plt.figure(figsize=(10,4.5))
+        axis = plt.gca()
+        axis.set_ylim([0, 5000])
         plt.xticks(x_values, x_ticks)
         label_additions = ""
         if "write" in operation:
-            label_additions = str(", max_open_zones=%s" % max_open_zones)
+            label_additions = ", max_open_zones=QD"
 
         if -1 not in y_values_QD1:
             plt.plot(x_values, y_values_QD1, '-mo', label=("QD=1%s" % label_additions) )
@@ -78,6 +88,8 @@ class BenchPlot(Plot):
             plt.plot(x_values, y_values_QD4, '-yv', label=("QD=4%s" % label_additions) )
         if -1 not in y_values_QD8:
             plt.plot(x_values, y_values_QD8, '-bd', label=("QD=8%s" % label_additions) )
+        if -1 not in y_values_QD14:
+            plt.plot(x_values, y_values_QD14, '-rx', label=("QD=14%s" % label_additions) )
         if -1 not in y_values_QD16:
             plt.plot(x_values, y_values_QD16, '-rx', label=("QD=16%s" % label_additions) )
         if -1 not in y_values_QD32:
@@ -90,11 +102,56 @@ class BenchPlot(Plot):
         if value_of_interest == "throughput_MiBs":
             plt.title("Throughput [MiBs] on %s.\n%s" % (operation, self.headline_additions))
             plt.ylabel("Throughput [MiBs]")
-            self.saveInOutputDir(("Throughput_%s_MOZ%s.pdf" % (operation, max_open_zones)))
+            self.saveInOutputDir(("Throughput_%s_variableBS.pdf" % (operation)))
         elif value_of_interest == "avg_lat_us":
             plt.title("Average Latency [µs] on %s.\n%s" % (operation, self.headline_additions))
             plt.ylabel("Average Latency [µs]")
-            self.saveInOutputDir(("AverageLatency_%sMOZ%s.pdf" % (operation, max_open_zones)))
+            self.saveInOutputDir(("AverageLatency_%s_variableBS.pdf" % (operation)))
+
+    def generatePercentileGraph(self, pinned_variables):
+        self.resetPlot()
+        plt.figure(figsize=(10,4.5))
+        benchmarkRows = csv.DictReader(open(self.csv_file))
+        lines = []
+        for row in benchmarkRows:
+            row_of_interest = True
+            for var_name, var_value in pinned_variables.items():
+                if row[var_name] != var_value:
+                    row_of_interest = False
+                    break
+
+            if row_of_interest:
+                label = ""
+                line = {}
+                for k, v in row.items():
+                    if 'clat_p' in k:
+                        line[str(float(k.split('_')[1][1:]))] = v
+                    else:
+                        label += str(k) + ":" + str(v) + " "
+                line['label'] = label[:-1]
+                lines.append(line)
+
+        if len(lines) == 0:
+            self.resetPlot()
+            return
+
+        for line in lines:
+            latency_line = dict(filter(lambda elem: 'label' not in elem[0], line.items()))
+            values = [int(i) for i in latency_line.values()]
+            keys = [float(i) for i in latency_line.keys()]
+            plt.plot(values, keys, label=line['label'])
+
+        plt.legend()
+        axis = plt.gca()
+        axis.set_xlim([0, 7000])
+        plt.title("%s Latency Percentiles.\n%s" % (pinned_variables['operation'].capitalize(), self.headline_additions))
+        plt.ylabel("Latency Percentiles")
+        plt.xlabel("Average Latency [µs]")
+        filename = "LatencyPercentiles_"
+        for var_name, var_value in pinned_variables.items():
+            filename += var_name + str(var_value) + "-"
+        filename = filename[:-1] + ".pdf"
+        self.saveInOutputDir(filename)
 
 class Run(Bench):
     jobname = "fio_zone_throughput_avg_lat"
@@ -132,10 +189,10 @@ class Run(Bench):
             size = max_size
         io_size = size
 
-        for operation in ["write", "randwrite", "read", "randread"]:
-            max_open_zones_list = [1, 2, 4, 8, 12]
+        for operation in operation_list:
+            tmp_max_open_zones_list = max_open_zones_list
             if "read" in operation:
-                max_open_zones_list = [1]
+                tmp_max_open_zones_list = [1]
                 print("About to prep the drive for read job")
                 self.discard_dev(dev)
                 init_param = ("--ioengine=io_uring --direct=1 --zonemode=zbd"
@@ -154,12 +211,15 @@ class Run(Bench):
                 self.run_cmd(dev, container, 'fio', fio_param)
                 print("Finished preping the drive")
 
-            for max_open_zones in max_open_zones_list:
-                for queue_depth in [1, 2, 4, 8, 16, 32, 64]:
+            for max_open_zones in tmp_max_open_zones_list:
+                for queue_depth in queue_depth_list:
                     if max_open_zones > queue_depth:
                         continue
 
-                    for block_size in ["4K", "8K", "16K", "64K", "128K"]:
+                    if "write" in operation and queue_depth > max_open_zones:
+                        continue
+
+                    for block_size in block_size_list:
                         for run in range(1, runs+1):
                             output_name = ("%s-%s-%s-%s-%s-%sof%s") % (operation, max_open_zones, queue_depth, block_size, self.jobname, run, runs)
                             print("About to start job %s" % output_name)
@@ -328,30 +388,28 @@ class Run(Bench):
 
     def plot(self, csv_file):
         plot = BenchPlot(csv_file)
+        for operation in operation_list:
+            plot.generateBarGraph(operation, "throughput_MiBs")
+            plot.generateBarGraph(operation, "avg_lat_us")
 
-        plot.generateBlockSizeGraph("write", "1", "throughput_MiBs")
-        plot.generateBlockSizeGraph("write", "8", "throughput_MiBs")
-        plot.generateBlockSizeGraph("randwrite", "1", "throughput_MiBs")
-        plot.generateBlockSizeGraph("randwrite", "8", "throughput_MiBs")
-        plot.generateBlockSizeGraph("read", "1", "throughput_MiBs")
-        plot.generateBlockSizeGraph("randread", "1", "throughput_MiBs")
+            if "write" in operation:
+                plot.generateBlockSizeGraph(operation, [str(x) for x in max_open_zones_list], "throughput_MiBs")
+                plot.generateBlockSizeGraph(operation, [str(x) for x in max_open_zones_list], "avg_lat_us")
 
-        plot.generateBlockSizeGraph("write", "1", "avg_lat_us")
-        plot.generateBlockSizeGraph("write", "8", "avg_lat_us")
-        plot.generateBlockSizeGraph("randwrite", "8", "avg_lat_us")
-        plot.generateBlockSizeGraph("randwrite", "1", "avg_lat_us")
-        plot.generateBlockSizeGraph("read", "1", "avg_lat_us")
-        plot.generateBlockSizeGraph("randread", "1", "avg_lat_us")
+            if "read" in operation:
+                plot.generateBlockSizeGraph(operation, ["1"], "throughput_MiBs")
+                plot.generateBlockSizeGraph(operation, ["1"], "avg_lat_us")
 
-        plot.generateBarGraph("read", "throughput_MiBs")
-        plot.generateBarGraph("write", "throughput_MiBs")
-        plot.generateBarGraph("randread", "throughput_MiBs")
-        plot.generateBarGraph("readwrite", "throughput_MiBs")
+            for block_size_K in block_size_K_list:
+                if "read" in operation:
+                    plot.generatePercentileGraph({"operation": operation, "block_size_K": block_size_K, "max_open_zones": "1"})
 
-        plot.generateBarGraph("read", "avg_lat_us")
-        plot.generateBarGraph("write", "avg_lat_us")
-        plot.generateBarGraph("randread", "avg_lat_us")
-        plot.generateBarGraph("randwrite", "avg_lat_us")
+                for max_open_zones in max_open_zones_list:
+                    if "write" in operation:
+                        plot.generatePercentileGraph({"operation": operation, "block_size_K": block_size_K, "max_open_zones": str(max_open_zones)})
+
+                for queue_depth in queue_depth_list:
+                    plot.generatePercentileGraph({"operation": operation, "block_size_K": block_size_K, "queue_depth": str(queue_depth)})
 
         print("  Done generateing graphs")
 
