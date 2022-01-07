@@ -66,7 +66,7 @@ def check_missing_programs(container, benchmarks):
     for benchmark in benchmarks:
         host_tools |= benchmark.required_host_tools()
         container_tools |= benchmark.required_container_tools()
-    
+
     if "system" in container:
         host_tools |= container_tools
     else:
@@ -178,7 +178,7 @@ def main(argv):
     benchmark_names = [x.id() for x in base_benches]
     parser = argparse.ArgumentParser(description = 'Zoned Block Device Benchmark Tool', add_help=False)
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--dev', '-d', default='', type=str, help='Path to block device used for test')
+    group.add_argument('--dev', '-d', type=str, help='Path to block device used for test')
     group.add_argument('--report', '-r', type=str, metavar='PATH', help='Generate reports')
     group.add_argument('--plot', '-p', type=str, metavar='OUTPUT_CSV', help='Generate plots')
     group.add_argument('--list-benchmarks', '-l', action='store_true', help='List available benchmarks')
@@ -188,7 +188,7 @@ def main(argv):
     parser.add_argument('--output', '-o', type=str, default=os.getcwd(), help='Directory to place results. Will be created if it does not exist')
     args = parser.parse_args()
 
-    dev = args.dev
+    dev = ''
     container = args.container
     output_path = args.output
     benches = base_benches
@@ -207,11 +207,11 @@ def main(argv):
     if args.report != None:
         run = 'report'
         report_path = args.report
-    
+
     if args.dev != None:
         run = 'bench'
         dev = args.dev
-            
+
     if args.list_benchmarks:
         list_benchs(base_benches)
         sys.exit()
