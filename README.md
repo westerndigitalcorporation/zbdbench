@@ -70,6 +70,10 @@ Regenerate plots from existing csv report
 
     ./run.py -b fio_zone_throughput_avg_lat -p output/YYYYMMDDHHMMSS/fio_zone_throughput_avg_lat.csv
 
+Run specific benchmark with the none scheduler:
+
+    ./run.py -b benchmark -d /dev/nvmeXnY --none-scheduler
+
 Benchmarks
 ----------
 
