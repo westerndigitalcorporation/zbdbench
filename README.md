@@ -125,13 +125,17 @@ fio_zone_randr_seqw_seqr_rrsw
            seperately in 2 lines in the csv.
 
 fio_zone_throughput_avg_lat
-  - Executes all combinations of the following workloads twice and averages
-    the throughput and latency in the csv report:
-      - Read/write
-      - Seq/Random
-      - BS: 4K, 8K, 16K, 64K, 128K
-      - max_open_zone: 1, 2, 4, 8, 14 (only for writes)
-      - QD: 1, 2, 4, 8, 14, 16, 32, 64 (for writes skipping QD's > max_open_zones and max_open_zones > QD)
+  - Executes all combinations of the following workloads report the throughput
+    and latency in the csv report (Note: 14 is a possible value for max_open_zones):
+      - Sequential read, random read, sequential write
+      - BS: 4K, 8K, 16K, 32K, 64K, 128K
+      - Sequential write and sequential read specific:
+        - Number of parallel jobs: 1, 2, 4, 8, 14, 16, 32, 64, 128 (skipping entries > max_open_zones)
+        - QD: 1
+        - ioengine: psync
+      - Random read specific:
+        - QD: 1, 2, 4, 8, 14, 16, 32, 64, 128
+        - ioengine: io_uring
 
     For reads the drive is prepared with a write. The ZBD is reset before each
     run.
