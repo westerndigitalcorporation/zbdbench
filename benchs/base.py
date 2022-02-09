@@ -71,6 +71,13 @@ class Bench(object):
         # Reported in 512B
         return (dev_size / 2)
 
+    def get_number_of_max_open_zones(self, dev):
+        devname = dev.strip('/dev/')
+        nr_max_open_zones = 0
+        with open(f"/sys/class/block/{devname}/queue/max_open_zones", 'r') as f:
+            nr_max_open_zones = int(f.readline())
+        return nr_max_open_zones
+
     def get_number_of_zones(self, dev):
         devname = dev.strip('/dev/')
         nr_zones = 0
