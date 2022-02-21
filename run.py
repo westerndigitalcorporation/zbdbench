@@ -211,7 +211,7 @@ def main(argv):
     group.add_argument('--help', '-h', action='store_true', help='Print help message and exit')
     parser.add_argument('--container', '-c', type=str, default='docker', choices=['docker', 'system'], help='Use containerized binaries (docker) or system binaries (system)')
     parser.add_argument('--benchmarks', '-b', type=str, nargs='+', metavar='NAME', help='Benchmarks to run')
-    parser.add_argument('--output', '-o', type=str, default=os.getcwd(), help='Directory to place results. Will be created if it does not exist')
+    parser.add_argument('--output', '-o', type=str, default=os.path.join(os.getcwd(), 'zbdbench_results'), help='Directory to place results. Will be created if it does not exist')
     parser.add_argument('--none-scheduler', action='store_true', help='Use none scheduler instead of mq-deadline.')
     args = parser.parse_args()
 
