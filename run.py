@@ -117,12 +117,17 @@ def create_dirs(run_output):
         print("Not able to create output directory. Exiting...")
         sys.exit(1)
 
-def collect_info(dev, run_output):
+def save_device_info(dev, run_output):
     subprocess.check_call(f"lsblk -b {dev} > {run_output}/lsblk-capacity.txt", shell=True)
+    subprocess.check_call(f"udevadm info --query=all --name={dev} > {run_output}/udevadm-info.txt", shell=True)
 
     if is_dev_zoned(dev):
         subprocess.check_call(f"blkzone capacity {dev} > {run_output}/blkzone-capacity.txt", shell=True)
         subprocess.check_call(f"blkzone report {dev} > {run_output}/blkzone-report.txt", shell=True)
+
+def save_benchmark_call(run_output):
+    benchmark_call = " ".join(sys.argv)
+    subprocess.check_call(f"echo {benchmark_call} > {run_output}/benchmark_call.txt", shell=True)
 
 def list_benchs(benches):
     print("\nBenchmarks:")
@@ -154,7 +159,8 @@ def run_benchmarks(dev, container, benches, run_output, scheduler_overwrite):
 
     create_dirs(run_output)
 
-    collect_info(dev, run_output)
+    save_benchmark_call(run_output)
+    save_device_info(dev, run_output)
 
     print("\nDev: %s" % dev)
     print("Env: %s" % container)
