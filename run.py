@@ -8,7 +8,7 @@ import distutils.spawn
 import argparse
 
 from datetime import datetime
-from benchs.base import base_benches, is_dev_zoned
+from benchs.base import base_benches, is_dev_zoned, DeviceScheduler
 from benchs import *
 
 
@@ -20,7 +20,7 @@ def check_dev_mounted(dev):
 
     print('Check OK: %s is not mounted' % dev)
 
-def check_and_set_scheduler(dev):
+def check_and_set_mqdeadline_scheduler(dev):
     devname = dev.strip('/dev/')
 
     with open('/sys/block/%s/queue/scheduler' % devname, 'r') as f:
@@ -43,7 +43,7 @@ def check_and_set_scheduler(dev):
 
     print("Check OK: %s has been configured to use the 'mq-deadline' scheduler" % dev)
 
-def check_and_disable_scheduler(dev):
+def check_and_set_none_scheduler(dev):
     devname = dev.strip('/dev/')
 
     with open('/sys/block/%s/queue/scheduler' % devname, 'r') as f:
@@ -126,7 +126,16 @@ def list_benchs(benches):
     for b in benches:
         print("  " + b.id())
 
-def run_benchmarks(dev, container, benches, run_output, none_scheduler):
+def check_and_set_scheduler_for_benchmark(dev, benchmark, scheduler_overwrite):
+    scheduler = benchmark.get_default_device_scheduler()
+    if scheduler_overwrite:
+        scheduler = scheduler_overwrite
+    if scheduler == DeviceScheduler.MQ_DEADLINE:
+        check_and_set_mqdeadline_scheduler(dev)
+    else:
+        check_and_set_none_scheduler(dev)
+
+def run_benchmarks(dev, container, benches, run_output, scheduler_overwrite):
     if not dev:
         print('No device name provided for benchmark')
         print('ex. run.py /dev/nvmeXnY')
@@ -135,10 +144,6 @@ def run_benchmarks(dev, container, benches, run_output, none_scheduler):
     # Verify that we're not about to destroy data unintended.
     check_dev_string(dev)
     check_dev_mounted(dev)
-    if none_scheduler:
-        check_and_disable_scheduler(dev)
-    else:
-        check_and_set_scheduler(dev)
     check_dev_zoned(dev)
     check_missing_programs(container, benches)
 
@@ -154,7 +159,7 @@ def run_benchmarks(dev, container, benches, run_output, none_scheduler):
 
     for b in benches:
         print("Executing: %s" % b.id())
-
+        check_and_set_scheduler_for_benchmark(dev, b, scheduler_overwrite)
         b.setup(dev, container, run_output)
         b.run(dev, container)
         b.teardown(dev, container)
@@ -212,7 +217,9 @@ def main(argv):
     parser.add_argument('--container', '-c', type=str, default='docker', choices=['docker', 'system'], help='Use containerized binaries (docker) or system binaries (system)')
     parser.add_argument('--benchmarks', '-b', type=str, nargs='+', metavar='NAME', help='Benchmarks to run')
     parser.add_argument('--output', '-o', type=str, default=os.path.join(os.getcwd(), 'zbdbench_results'), help='Directory to place results. Will be created if it does not exist')
-    parser.add_argument('--none-scheduler', action='store_true', help='Use none scheduler instead of mq-deadline.')
+    scheduler_group = parser.add_mutually_exclusive_group(required=False)
+    scheduler_group.add_argument('--none-scheduler', action='store_true', help='Use none scheduler for the given drive.')
+    scheduler_group.add_argument('--mq-deadline-scheduler', action='store_true', help='Use mq-deadline scheduler for the given drive.')
     args = parser.parse_args()
 
     dev = ''
@@ -220,13 +227,19 @@ def main(argv):
     output_path = args.output
     benches = base_benches
     run = ''
-    none_scheduler = args.none_scheduler
+    scheduler_overwrite = None
 
     if args.help:
         parser.print_help()
         print()
         print_help()
         sys.exit()
+
+    if args.none_scheduler:
+        scheduler_overwrite = DeviceScheduler.NONE
+
+    if args.mq_deadline_scheduler:
+        scheduler_overwrite = DeviceScheduler.MQ_DEADLINE
 
     if args.plot != None:
         run = 'plot'
@@ -266,7 +279,7 @@ def main(argv):
     elif run == 'report':
         run_reports(report_path, benches)
     elif run == 'bench':
-        run_benchmarks(dev, container, benches, run_output, none_scheduler)
+        run_benchmarks(dev, container, benches, run_output, scheduler_overwrite)
     else:
         print_help()
 

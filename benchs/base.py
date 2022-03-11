@@ -5,9 +5,15 @@ import csv
 import os
 import matplotlib.pyplot as plt
 import fileinput
+from enum import Enum
 
 # Global list of available benchmarks
 base_benches = []
+
+# Enum for device scheduler
+class DeviceScheduler(Enum):
+    NONE = 1
+    MQ_DEADLINE = 2
 
 # Generic class that a benchmark definition must implement.
 class Bench(object):
@@ -32,6 +38,9 @@ class Bench(object):
 
     def plot(self, csv_file):
         print("Not implemented (plot)")
+
+    def get_default_device_scheduler(self):
+        return DeviceScheduler.MQ_DEADLINE
 
     # Helpers
     def docker_sys_cmd(self, dev):

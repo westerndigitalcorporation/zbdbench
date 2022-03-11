@@ -5,7 +5,7 @@ import glob
 import re
 import math
 import matplotlib.pyplot as plt
-from .base import base_benches, Bench, Plot
+from .base import base_benches, Bench, Plot, DeviceScheduler
 from benchs.base import is_dev_zoned
 
 operation_list = ["read", "randread", "write"]
@@ -168,6 +168,9 @@ class Run(Bench):
 
     def __init__(self):
         pass
+
+    def get_default_device_scheduler(self):
+        return DeviceScheduler.NONE
 
     def id(self):
         return self.jobname
