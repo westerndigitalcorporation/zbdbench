@@ -272,16 +272,14 @@ def main(argv):
             list_benchs(base_benches)
             sys.exit(1)
 
-    run_output_relative = datetime.now().strftime("%Y-%m-%d-%H%M%S")
-    run_output = "%s/%s" % (output_path, run_output_relative)
-
-    print(f"Output directory: {run_output}")
-
     if run == 'plot':
         run_plots(csv_file, benches)
     elif run == 'report':
         run_reports(report_path, benches)
     elif run == 'bench':
+        run_output_relative = datetime.now().strftime("%Y-%m-%d-%H%M%S")
+        run_output = "%s/%s" % (output_path, run_output_relative)
+        print(f"Output directory: {run_output}")
         run_benchmarks(dev, container, benches, run_output, scheduler_overwrite)
     else:
         print_help()
