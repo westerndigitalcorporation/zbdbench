@@ -70,12 +70,18 @@ Regenerate plots from existing csv report
 
     ./run.py -b fio_zone_throughput_avg_lat -p output/YYYYMMDDHHMMSS/fio_zone_throughput_avg_lat.csv
 
-Run specific benchmark with the none scheduler:
+Overwrite benchmark run with the none device scheduler:
 
     ./run.py -b benchmark -d /dev/nvmeXnY --none-scheduler
 
+Overwrite benchmark run with the mq-deadline device scheduler:
+
+    ./run.py -b benchmark -d /dev/nvmeXnY --mq-deadline-scheduler
+
 Benchmarks
 ----------
+
+All fio benchmarks are setting the none scheduler by default.
 
 fio_zone_write
   - executes a fio workload that writes sequential to 14 zones in parallel and

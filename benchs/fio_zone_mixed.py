@@ -1,6 +1,6 @@
 import json
 import csv
-from .base import base_benches, Bench
+from .base import base_benches, Bench, DeviceScheduler
 from benchs.base import is_dev_zoned
 
 class Run(Bench):
@@ -8,6 +8,9 @@ class Run(Bench):
 
     def __init__(self):
         pass
+
+    def get_default_device_scheduler(self):
+        return DeviceScheduler.NONE
 
     def id(self):
         return self.jobname
