@@ -100,7 +100,7 @@ class Bench(object):
         with open(f'{self.output}/blkzone-report.txt', 'r') as f:
             capacity_blocks = int(f.readline().split()[5].strip(','), 0)
             capacity_bytes = capacity_blocks * 512
-            capacity_mb = capacity_bytes / (1024^2)
+            capacity_mb = capacity_bytes / (1024**2)
 
         return capacity_mb
 
