@@ -11,6 +11,9 @@ from datetime import datetime
 from benchs.base import base_benches, is_dev_zoned, DeviceScheduler
 from benchs import *
 
+def get_zbdbench_version():
+    version_process = subprocess.Popen(["git", "describe", "--abbrev=7", "--dirty"], stdout=subprocess.PIPE)
+    return version_process.communicate()[0].strip().decode('ascii')
 
 def check_dev_mounted(dev):
     with open('/proc/mounts','r') as f:
@@ -114,17 +117,33 @@ def create_dirs(run_output):
         print("Not able to create output directory. Exiting...")
         sys.exit(1)
 
-def collect_info(dev, run_output):
+def save_device_info(dev, run_output):
     subprocess.check_call(f"lsblk -b {dev} > {run_output}/lsblk-capacity.txt", shell=True)
+    subprocess.check_call(f"udevadm info --query=all --name={dev} > {run_output}/udevadm-info.txt", shell=True)
 
     if is_dev_zoned(dev):
         subprocess.check_call(f"blkzone capacity {dev} > {run_output}/blkzone-capacity.txt", shell=True)
         subprocess.check_call(f"blkzone report {dev} > {run_output}/blkzone-report.txt", shell=True)
 
+def save_benchmark_call(run_output):
+    benchmark_call = " ".join(sys.argv)
+    subprocess.check_call(f"echo {benchmark_call} > {run_output}/benchmark_call.txt", shell=True)
+
 def list_benchs(benches):
     print("\nBenchmarks:")
     for b in benches:
         print("  " + b.id())
+
+def collect_results_in_mysql(results_dir):
+    mysql_env_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "recipes", "docker-compose", ".env")
+    if not os.path.exists(mysql_env_file_path):
+           print("Skipping result collection. No MySQL environment (%s) found. Please refer to the README.md" % mysql_env_file_path)
+           return
+    print("Starting to collect results into the configured MySQL instance.")
+    from data_collector import mysql_data_collector
+    db_connection = mysql_data_collector.DatabaseConnection(mysql_env_file_path)
+    db_connection.collect_json_results_from_directory(results_dir)
+    print("Done collecting results.")
 
 def check_and_set_scheduler_for_benchmark(dev, benchmark, scheduler_overwrite):
     scheduler = benchmark.get_default_device_scheduler()
@@ -151,7 +170,8 @@ def run_benchmarks(dev, container, benches, run_output, scheduler_overwrite):
 
     create_dirs(run_output)
 
-    collect_info(dev, run_output)
+    save_benchmark_call(run_output)
+    save_device_info(dev, run_output)
 
     print("\nDev: %s" % dev)
     print("Env: %s" % container)
@@ -165,6 +185,7 @@ def run_benchmarks(dev, container, benches, run_output, scheduler_overwrite):
         b.teardown(dev, container)
         csv_file = b.report(run_output)
         b.plot(csv_file)
+        collect_results_in_mysql(run_output)
 
     print("\nCompleted %s benchmark(s)" % len(benches))
 
@@ -205,6 +226,9 @@ def print_help():
     print('  Use container executables (default)')
     print('    run.py -d /dev/nvmeXnY')
 
+    print('\nCollecting results')
+    print('    run.py --collect-results result_dir')
+
 def main(argv):
     benchmark_names = [x.id() for x in base_benches]
     parser = argparse.ArgumentParser(description = 'Zoned Block Device Benchmark Tool', add_help=False)
@@ -214,6 +238,7 @@ def main(argv):
     group.add_argument('--plot', '-p', type=str, metavar='OUTPUT_CSV', help='Generate plots')
     group.add_argument('--list-benchmarks', '-l', action='store_true', help='List available benchmarks')
     group.add_argument('--help', '-h', action='store_true', help='Print help message and exit')
+    group.add_argument('--collect-results', type=str, help='Collect benchmark results of the specified path within this argument in a MySQL database which is specified by the mysql.conf file.')
     parser.add_argument('--container', '-c', type=str, default='docker', choices=['docker', 'system'], help='Use containerized binaries (docker) or system binaries (system)')
     parser.add_argument('--benchmarks', '-b', type=str, nargs='+', metavar='NAME', help='Benchmarks to run')
     parser.add_argument('--output', '-o', type=str, default=os.path.join(os.getcwd(), 'zbdbench_results'), help='Directory to place results. Will be created if it does not exist')
@@ -240,6 +265,10 @@ def main(argv):
 
     if args.mq_deadline_scheduler:
         scheduler_overwrite = DeviceScheduler.MQ_DEADLINE
+
+    if args.collect_results != None:
+        run = 'collect-results'
+        results_dir = args.collect_results
 
     if args.plot != None:
         run = 'plot'
@@ -269,16 +298,17 @@ def main(argv):
             list_benchs(base_benches)
             sys.exit(1)
 
-    run_output_relative = datetime.now().strftime("%Y-%m-%d-%H%M%S")
-    run_output = "%s/%s" % (output_path, run_output_relative)
-
-    print(f"Output directory: {run_output}")
-
-    if run == 'plot':
+    if run == 'collect-results':
+        #TODO: check if results are already present in the db and reject duplicates
+        collect_results_in_mysql(results_dir)
+    elif run == 'plot':
         run_plots(csv_file, benches)
     elif run == 'report':
         run_reports(report_path, benches)
     elif run == 'bench':
+        run_output_relative = datetime.now().strftime("%Y-%m-%d-%H%M%S")
+        run_output = "%s/%s" % (output_path, run_output_relative)
+        print(f"Output directory: {run_output}")
         run_benchmarks(dev, container, benches, run_output, scheduler_overwrite)
     else:
         print_help()

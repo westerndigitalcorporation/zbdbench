@@ -3,5 +3,8 @@
 output/
 zbdbench_results/
 
+# Configs
+recipes/docker-compose/.env
+
 # macOS
 .DS_Store
