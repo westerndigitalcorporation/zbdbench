@@ -153,6 +153,22 @@ fio_zone_throughput_avg_lat
 
   - Generates multiple graphs that plot the behavior of throughput and latency.
 
+usenix_atc_2021_zns_eval
+  Executes RocksDB's db_bench according to the RocksDB evaluation section
+  (5.2 RocksDB) of the paper '[ZNS: Avoiding the Block Interface Tax for
+  Flash-based SSDs](https://www.pdl.cmu.edu/PDL-FTP/Storage/USENIX_ATC_2021_ZNS.pdf)'.
+
+  Depending on if the specified drive to benchmark is a ZNS or Conventional
+  device different benchmarks are run.
+  - For conventional devices the db_bench workload is run on the following
+    filesystems:
+        - xfs
+        - f2fs
+  - For ZNS devices the db_bench workload is run on the f2fs filesystem and
+    with the ZenFS RocksDB plugin without an additional filesystem.
+
+  Note: the tests are designed to run on 2TB devices.
+
 Dependencies
 ------------
 
