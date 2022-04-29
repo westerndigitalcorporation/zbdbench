@@ -43,8 +43,8 @@ class Bench(object):
         return DeviceScheduler.MQ_DEADLINE
 
     # Helpers
-    def container_sys_cmd(self, dev):
-        return f"podman run -v \"{dev}:{dev}\" -v \"{self.output}:/output\""
+    def container_sys_cmd(self, dev, extra_params):
+        return f"podman run -v \"{dev}:{dev}\" -v \"{self.output}:/output\" {extra_params}"
 
     def required_host_tools(self):
         return {'blkzone', 'blkdiscard'}
@@ -52,7 +52,7 @@ class Bench(object):
     def required_container_tools(self):
         return set()
 
-    def sys_cmd(self, tool, dev, container):
+    def sys_cmd(self, tool, dev, container, extra_container_params):
         exec_cmd = tool
         container_cmd = ''
 
@@ -68,7 +68,7 @@ class Bench(object):
             if tool == 'mkfs.xfs':
                 exec_cmd = 'zxfs'
 
-            container_cmd = self.container_sys_cmd(dev)
+            container_cmd = self.container_sys_cmd(dev, extra_container_params)
 
         return f"{container_cmd} {exec_cmd}"
 
@@ -142,8 +142,8 @@ class Bench(object):
         else:
             subprocess.check_call("blkdiscard %s" % dev, shell=True)
 
-    def run_cmd(self, dev, container, tool, tool_params):
-        cmd = "%s %s" % (self.sys_cmd(tool, dev, container), tool_params)
+    def run_cmd(self, dev, container, tool, tool_params, extra_container_params=''):
+        cmd = "%s %s" % (self.sys_cmd(tool, dev, container, extra_container_params), tool_params)
 
         print("Exec: %s" % cmd)
 
