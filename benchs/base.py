@@ -117,6 +117,15 @@ class Bench(object):
 
         return capacity_mb
 
+    def get_sector_size(self, dev):
+        devname = dev.strip('/dev/')
+        sectorsize = 0
+
+        with open('/sys/block/%s/queue/logical_block_size' % devname, 'r') as f:
+            sectorsize = int(f.readline())
+
+        return sectorsize
+
     def get_nvme_drive_capacity_gb(self, path):
         if is_dev_zoned(path):
             filename = path + "/blkzone-capacity.txt"
