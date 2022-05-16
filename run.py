@@ -93,7 +93,7 @@ def check_missing_programs(container, benchmarks):
     if "system" in container:
         host_tools |= container_tools
     else:
-        host_tools.add('docker')
+        host_tools.add('podman')
 
     print(f"Required host tools: {host_tools}")
     for tool in host_tools:
@@ -214,7 +214,7 @@ def main(argv):
     group.add_argument('--plot', '-p', type=str, metavar='OUTPUT_CSV', help='Generate plots')
     group.add_argument('--list-benchmarks', '-l', action='store_true', help='List available benchmarks')
     group.add_argument('--help', '-h', action='store_true', help='Print help message and exit')
-    parser.add_argument('--container', '-c', type=str, default='docker', choices=['docker', 'system'], help='Use containerized binaries (docker) or system binaries (system)')
+    parser.add_argument('--container', '-c', type=str, default='yes', choices=['yes', 'no'], help='Use containerized binaries or system binaries')
     parser.add_argument('--benchmarks', '-b', type=str, nargs='+', metavar='NAME', help='Benchmarks to run')
     parser.add_argument('--output', '-o', type=str, default=os.path.join(os.getcwd(), 'zbdbench_results'), help='Directory to place results. Will be created if it does not exist')
     scheduler_group = parser.add_mutually_exclusive_group(required=False)

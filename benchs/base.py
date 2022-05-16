@@ -43,8 +43,8 @@ class Bench(object):
         return DeviceScheduler.MQ_DEADLINE
 
     # Helpers
-    def docker_sys_cmd(self, dev):
-        return "docker run -v \"%s:%s\" -v \"%s:/output\" --privileged=true" % (dev, dev, self.output)
+    def container_sys_cmd(self, dev):
+        return f"podman run -v \"{dev}:{dev}\" -v \"{self.output}:/output\""
 
     def required_host_tools(self):
         return {'blkzone', 'blkdiscard'}
@@ -56,7 +56,7 @@ class Bench(object):
         exec_cmd = tool
         container_cmd = ''
 
-        if container == 'docker':
+        if container == 'yes':
             if tool == 'fio':
                 exec_cmd = 'zfio'
             if tool == 'db_bench':
@@ -64,7 +64,7 @@ class Bench(object):
             if tool == 'zenfs':
                 exec_cmd = 'zzenfs'
 
-            container_cmd = self.docker_sys_cmd(dev)
+            container_cmd = self.container_sys_cmd(dev)
 
         return "%s %s" % (container_cmd, exec_cmd)
 
