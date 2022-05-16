@@ -34,7 +34,7 @@ To execute the benchmarks, run:
 
     sudo ./run.py -d /dev/nvmeXnY
 
-If you have the latest fio installed, you may skip the docker installation and
+If you have the latest fio installed, you may skip the container installation and
 run the benchmarks using the system commands.
 
     sudo ./run.py -d /dev/nvmeXnY -c system
@@ -172,13 +172,11 @@ environment, the script requires the following installed:
    - Fedora: sudo dnf -y install util-linux-ng
    - CentOS: sudo yum -y install util-linux-ng
 
- - a valid docker environment
-   - If you do not have a docker environment installed, please see:
-     - Ubuntu: https://docs.docker.com/engine/install/ubuntu/
-     - Fedora: https://docs.docker.com/engine/install/fedora/
-     - Centos: https://docs.docker.com/engine/install/centos/
+ - a valid container (podman) environment
+   - If you do not have a container environment installed, please see [this
+     link](https://podman.io/getting-started/installation)
 
- - installed docker containers:
+ - installed containers:
    - zfio - contains latest fio compiled with zone capacity support
    - zrocksdb - contains rocksdb with zenfs built-in
    - zzenfs - contains the zenfs tool to inspect the zenfs file-system
@@ -186,10 +184,10 @@ environment, the script requires the following installed:
    The container can be installed with:
      cd recipes/docker; sudo ./build.sh
 
-   The container installation can be verified by listing the docker image:
-     sudo docker images zfio
-     sudo docker images zrocksdb
-     sudo docker images zzenfs
+   The container installation can be verified by listing the image:
+     sudo podman images zfio
+     sudo podman images zrocksdb
+     sudo podman images zzenfs
 
   - matplotlib (e.g. through pip3)
       https://matplotlib.org/stable/users/installing.html

@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# to prune all images in docker. Execute "docker prune -a". Note that it will remove ALL! images loaded.
+# to prune all images, execute "podman prune -a". Note that it will remove ALL! images loaded.
 
-docker build -t zfio fio
-docker build -t zrocksdb rocksdb
-docker build -t zzenfs zenfs
+podman build -t zfio fio
+podman build -t zrocksdb rocksdb
+podman build -t zzenfs zenfs
