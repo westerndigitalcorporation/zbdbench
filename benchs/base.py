@@ -62,11 +62,11 @@ class Bench(object):
             if tool == 'db_bench':
                 exec_cmd = 'zrocksdb'
             if tool == 'zenfs':
-                exec_cmd = 'zzenfs'
+                exec_cmd = '--entrypoint zenfs zrocksdb'
 
             container_cmd = self.container_sys_cmd(dev)
 
-        return "%s %s" % (container_cmd, exec_cmd)
+        return f"{container_cmd} {exec_cmd}"
 
     def sys_container_dev(self, dev, container):
             return dev

@@ -4,4 +4,3 @@
 
 podman build -t zfio fio
 podman build -t zrocksdb rocksdb
-podman build -t zzenfs zenfs
