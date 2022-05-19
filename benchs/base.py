@@ -63,6 +63,10 @@ class Bench(object):
                 exec_cmd = 'zrocksdb'
             if tool == 'zenfs':
                 exec_cmd = '--entrypoint zenfs zrocksdb'
+            if tool == 'mkfs.f2fs':
+                exec_cmd = 'zf2fs'
+            if tool == 'mkfs.xfs':
+                exec_cmd = 'zxfs'
 
             container_cmd = self.container_sys_cmd(dev)
 
