@@ -161,6 +161,29 @@ usenix_atc_2021_zns_eval
 
   Note: the tests are designed to run on 2TB devices.
 
+sysbench
+  Executes a sysbench workload within a percona-server MyRocks installation.
+  For conventional devices, the default filesystem will be xfs whereas for
+  ZBD devices by default the benchmark will be issued through ZenFS, the
+  RocksDB plugin which enables direct access to zoned storage.
+  If the `-a btrfs` is supplied the benchmark will run on zoned or
+  conventional devices with btrfs as the filesystem.
+
+  The benchmark will first bulk-load the drive with a database of about 800GB.
+  10 million `db-entries` correspond to ~2GB of capacity.
+  With `200.000.000 table-size * 20 tables = 4000M db-entries` the database
+  size will result in 800GB.
+  After that the following oltp workloads are run each for 30 minutes in the
+  given order:
+  - oltp_update_index.lua
+  - oltp_update_non_index.lua
+  - oltp_delete.lua
+  - oltp_write_only.lua
+  - oltp_insert.lua
+  - oltp_read_write.lua
+  - oltp_read_only.lua
+
+
 Dependencies
 ------------
 
