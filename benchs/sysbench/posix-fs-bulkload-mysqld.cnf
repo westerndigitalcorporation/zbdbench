@@ -1,0 +1,34 @@
+[mysqld]
+socket          = /var/run/mysqld/mysql.sock
+log-error       = /mnt/test/mysql/error.log
+datadir         = /mnt/test/mysql
+default-storage-engine=rocksdb
+plugin-load-add=rocksdb=ha_rocksdb.so
+default-tmp-storage-engine=MyISAM
+# binary log
+disable-log-bin
+# general
+table_open_cache=256K
+table_open_cache_instances=64
+rocksdb_bulk_load=1
+rocksdb_block_cache_size=64G
+# connections
+ssl=0
+connect_timeout=120
+back_log=4K
+max_connections=4K
+max_prepared_stmt_count=4M
+# RocksDB
+rocksdb_max_open_files=-1
+rocksdb_max_background_jobs=8
+rocksdb_max_total_wal_size=4G
+rocksdb_block_size=16K
+rocksdb_table_cache_numshardbits=6
+# triggering compaction if there are many sequential deletes
+rocksdb_compaction_sequential_deletes_count_sd=1
+rocksdb_compaction_sequential_deletes=199999
+rocksdb_compaction_sequential_deletes_window=200000
+rocksdb_default_cf_options="write_buffer_size=512M;target_file_size_base=1G;max_bytes_for_level_base=512M;level0_file_num_compaction_trigger=4;level0_slowdown_writes_trigger=10;max_write_buffer_number=8;compression=kLZ4Compression;bottommost_compression=kLZ4Compression;compression_opts=-14:4:0;block_based_table_factory={cache_index_and_filter_blocks=1;filter_policy=bloomfilter:10:false;whole_key_filtering=0};level_compaction_dynamic_level_bytes=true;optimize_filters_for_hits=true;memtable_prefix_bloom_size_ratio=0.05;prefix_extractor=capped:12;compaction_pri=kMinOverlappingRatio"
+rocksdb_max_subcompactions=4
+rocksdb_use_direct_reads=ON
+rocksdb_use_direct_io_for_flush_and_compaction=ON

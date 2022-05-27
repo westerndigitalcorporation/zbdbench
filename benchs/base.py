@@ -93,6 +93,8 @@ class Bench(object):
                 exec_cmd = 'zf2fs'
             if tool == 'mkfs.xfs':
                 exec_cmd = 'zxfs'
+            if tool == 'sysbench':
+                exec_cmd = 'zsysbench'
 
             container_cmd = self.container_sys_cmd(dev, extra_container_params)
         else:

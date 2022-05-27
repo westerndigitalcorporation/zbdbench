@@ -160,7 +160,7 @@ SPDK FIO plugin support:
 
   - (Random) Read and (Random) Write performance of the drive is subseqently messured.
 
-## fio_zone_write
+### fio_zone_write
   - executes a fio workload that writes sequential to 14 zones in parallel and
     while writing 6 times the capacity of the device.
 
@@ -168,7 +168,7 @@ SPDK FIO plugin support:
     1. written_gb: gigabytes written (GB)
     2. write_avg_mbs: average throughput (MB/s)
 
-## fio_zone_mixed
+### fio_zone_mixed
   - executes a fio workload that first preconditions the block device to steady
     state. Then rate limited writes are issued, in which 4KB random reads
     are issued in parallel. The average latency for the 4KB random read is
@@ -186,7 +186,7 @@ SPDK FIO plugin support:
        misleading, as the write throughput requested has not been possible to
        achieve.
 
-## fio_zone_throughput_avg_lat
+### fio_zone_throughput_avg_lat
   - Executes all combinations of the following workloads report the throughput
     and latency in the csv report (Note: 14 is a possible value for max_open_zones):
       - Sequential read, random read, sequential write
@@ -209,7 +209,7 @@ SPDK FIO plugin support:
 
   - Generates multiple graphs that plot the behavior of throughput and latency.
 
-## usenix_atc_2021_zns_eval
+### usenix_atc_2021_zns_eval
   Executes RocksDB's db_bench according to the RocksDB evaluation section
   (5.2 RocksDB) of the paper '[ZNS: Avoiding the Block Interface Tax for
   Flash-based SSDs](https://www.pdl.cmu.edu/PDL-FTP/Storage/USENIX_ATC_2021_ZNS.pdf)'.
@@ -224,6 +224,28 @@ SPDK FIO plugin support:
     with the ZenFS RocksDB plugin without an additional filesystem.
 
   Note: the tests are designed to run on 2TB devices.
+
+### sysbench
+  Executes a sysbench workload within a percona-server MyRocks installation.
+  For conventional devices, the default filesystem will be xfs whereas for
+  ZBD devices by default the benchmark will be issued through ZenFS, the
+  RocksDB plugin which enables direct access to zoned storage.
+  If the `-x btrfs` is supplied the benchmark will run on zoned or
+  conventional devices with btrfs as the filesystem.
+
+  The benchmark will first bulk-load the drive with a database of about 800GB.
+  10 million `db-entries` correspond to ~2GB of capacity.
+  With `200.000.000 table-size * 20 tables = 4000M db-entries` the database
+  size will result in 800GB.
+  After that the following oltp workloads are run each for 30 minutes in the
+  given order:
+  - oltp_update_index.lua
+  - oltp_update_non_index.lua
+  - oltp_delete.lua
+  - oltp_write_only.lua
+  - oltp_insert.lua
+  - oltp_read_write.lua
+  - oltp_read_only.lua
 
 Advance Data Analysis using SQLite
 ----------------------

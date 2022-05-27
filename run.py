@@ -120,6 +120,8 @@ def check_missing_programs(container, benchmark):
                 exec_img = 'zf2fs'
             if tool == 'mkfs.xfs':
                 exec_img = 'zxfs'
+            if tool == 'sysbench':
+                exec_img = 'zsysbench'
 
         p = subprocess.run(f"podman image exists {exec_img}", shell=True)
 
