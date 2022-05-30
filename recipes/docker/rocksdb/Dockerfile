@@ -28,7 +28,7 @@ RUN apk --no-cache add libaio snappy gflags && \
     make install && \
     cd /root && \
     rm -rf /root/libzbd && \
-    git clone https://github.com/facebook/rocksdb.git /root/rocksdb && \
+    git clone https://github.com/facebook/rocksdb.git -b v7.2.2 /root/rocksdb && \
     cd /root/rocksdb && \
     git clone https://github.com/westerndigitalcorporation/zenfs.git /root/rocksdb/plugin/zenfs && \
     DEBUG_LEVEL=0 ROCKSDB_PLUGINS=zenfs make -j "$(nproc)" db_bench install && \
