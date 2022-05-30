@@ -1,4 +1,4 @@
-FROM alpine:3.13 as builder
+FROM alpine:3.15.4 as builder
 MAINTAINER Matias Bjørling <matias.bjorling@wdc.com>
 
 COPY blkzoned.h /root/blkzoned.h
