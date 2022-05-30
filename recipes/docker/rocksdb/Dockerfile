@@ -20,7 +20,7 @@ RUN apk --no-cache add libaio snappy gflags && \
         cmake \
         coreutils && \
     mv /root/blkzoned.h /usr/include/linux/blkzoned.h && \
-    git clone https://github.com/westerndigitalcorporation/libzbd.git /root/libzbd && \
+    git clone https://github.com/westerndigitalcorporation/libzbd.git -b v2.0.3 /root/libzbd && \
     cd /root/libzbd && \
     ./autogen.sh && \
     ./configure && \
