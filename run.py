@@ -88,15 +88,14 @@ def check_dev_zoned(dev):
     else:
         print("Check OK: %s is a conventional block device" % dev)
 
-
-def check_missing_programs(container, benchmarks):
+def check_missing_programs(container, benchmark):
 
     host_tools = {'blkzone'}
     container_tools = set()
 
-    for benchmark in benchmarks:
-        host_tools |= benchmark.required_host_tools()
-        container_tools |= benchmark.required_container_tools()
+    host_tools |= benchmark.required_host_tools()
+    container_tools |= benchmark.required_container_tools()
+
     if "no" in container:
         host_tools |= container_tools
     else:
@@ -155,9 +154,10 @@ def gather_device_info(dev, run_output):
 def gather_benchmark(run_output, benchmark):
     subprocess.check_call(f"echo {benchmark} > {run_output}/benchmark.txt", shell=True)
 
-def gather_benchmark_call(run_output):
+def gather_benchmark_call(run_output, benchmark_args):
     benchmark_call = " ".join(sys.argv)
     subprocess.check_call(f"echo {benchmark_call} > {run_output}/benchmark_call.txt", shell=True)
+    subprocess.check_call(f"echo {benchmark_args} > {run_output}/benchmark_args.txt", shell=True)
 
 def gather_system_meminfo(run_output):
     subprocess.check_call(f"free -h > {run_output}/system_meminfo.txt", shell=True)
@@ -193,8 +193,7 @@ def check_and_set_scheduler_for_benchmark(dev, benchmark, scheduler_overwrite):
         else:
             check_and_set_none_scheduler(dev)
 
-
-def run_benchmarks(dev, container, benches, output_path, run_output, scheduler_overwrite, annotation):
+def run_benchmark(dev, container, benchmark, output_path, run_output, scheduler_overwrite, annotation, benchmark_args):
     if not dev:
         print('No device name provided for benchmark')
         print('ex. run.py /dev/nvmeXnY')
@@ -204,13 +203,12 @@ def run_benchmarks(dev, container, benches, output_path, run_output, scheduler_o
     check_dev_string(dev)
     check_dev_mounted(dev)
     check_dev_zoned(dev)
-    check_missing_programs(container, benches)
-
-    list_benchs(benches)
+    check_missing_programs(container, benchmark)
 
     create_dirs(run_output)
 
-    gather_benchmark_call(run_output)
+    gather_benchmark(run_output, benchmark.id())
+    gather_benchmark_call(run_output, benchmark_args)
     gather_device_info(dev, run_output)
     gather_system_meminfo(run_output)
     gather_system_cpuinfo(run_output)
@@ -221,47 +219,35 @@ def run_benchmarks(dev, container, benches, output_path, run_output, scheduler_o
     print("Env: %s" % container)
     print("Output: %s\n" % run_output)
 
-    for b in benches:
-        gather_benchmark(run_output, b.id())
-        print("Executing: %s" % b.id())
-        check_and_set_scheduler_for_benchmark(dev, b, scheduler_overwrite)
-        b.setup(dev, container, run_output)
-        b.run(dev, container)
-        b.teardown(dev, container)
-        csv_file = b.report(run_output)
-        b.plot(csv_file)
-        collect_results_in_sqlite(output_path, run_output)
+    print(f"Executing benchmark: {benchmark.id()}")
+    if len(benchmark_args) > 0:
+        print(f"   With arguments: {benchmark_args}")
+    check_and_set_scheduler_for_benchmark(dev, benchmark, scheduler_overwrite)
+    benchmark.setup(dev, container, run_output, benchmark_args)
+    benchmark.run(dev, container)
+    benchmark.teardown(dev, container)
+    csv_file = benchmark.report(run_output)
+    benchmark.plot(csv_file)
+    collect_results_in_sqlite(output_path, run_output)
+    print(f"\nCompleted benchmark {benchmark.id()}")
 
-    print("\nCompleted %s benchmark(s)" % len(benches))
+def run_report(path, benchmark):
+    print(f"Generating report for: {benchmark.id()}")
+    csv_file = benchmark.report(path)
+    benchmark.plot(csv_file)
 
-
-def run_reports(path, benches):
-    for b in benches:
-        print("Generating report for: %s" % b.id())
-
-        csv_files = []
-        csv_files.append(b.report(path))
-        b.plot(csv_files)
-
-
-def run_plots(csv_files, benches):
-    for b in benches:
-        print("Generating plot for: %s, %s" % (b.id(), csv_files))
-        b.plot(csv_files)
-
+def run_plot(csv_file, benchmark):
+    print(f"Generating plot for: {benchmark.id()}, {csv_file}")
+    benchmark.plot(csv_file)
 
 def print_help():
     print('Benchmarking')
     print('  List available benchmarks')
     print('    run.py -l')
-    print('  Run all benchmarks:')
-    print('    run.py -d /dev/nvmeXnY')
     print('  Run specific benchmark')
     print('    run.py -d /dev/nvmeXnY -b fio_zone_write')
 
     print('\nReporting')
-    print('  Generate all reports')
-    print('    run.py -r output_dir')
     print('  Generate specific report')
     print('    run.py -r output_dir -b fio_zone_write')
 
@@ -271,16 +257,14 @@ def print_help():
 
     print('\nExecution Environment')
     print('  Use system executables')
-    print('    run.py -d /dev/nvmeXnY -c system')
+    print('    run.py -d /dev/nvmeXnY -b fio_zone_write -c no')
     print('  Use container executables (default)')
-    print('    run.py -d /dev/nvmeXnY')
+    print('    run.py -d /dev/nvmeXnY -b fio_zone_write')
 
     print('\nCollecting results')
     print('    run.py --collect-results result_dir')
 
 def main(argv):
-    benchmark_names = [x.id() for x in base_benches]
-
     parser = argparse.ArgumentParser(description = 'Zoned Block Device Benchmark Tool', add_help=False)
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--dev', '-d', type=str, help='Path to block device used for test')
@@ -290,12 +274,12 @@ def main(argv):
     group.add_argument('--help', '-h', action='store_true', help='Print help message and exit')
     group.add_argument('--collect-results', type=str, help='Collect benchmark results of the specified path within this argument in a MySQL database which is specified by the mysql.conf file.')
     parser.add_argument('--container', '-c', type=str, default='yes', choices=['yes', 'no'], help='Use containerized binaries or system binaries')
-    parser.add_argument('--use-spdk', '-s', type=str, default='no', choices=['yes', 'no'], help='Use spdk plugin for fio(uses io_uring spdk bdev)')
-    parser.add_argument('--benchmarks', '-b', type=str, nargs='+', metavar='NAME', help='Benchmarks to run')
+    parser.add_argument('--benchmark', '-b', type=str, metavar='NAME', help='Benchmark to run')
     parser.add_argument('--output', '-o', type=str, default=os.path.join(os.getcwd(), 'zbdbench_results'), help='Directory to place results. Will be created if it does not exist')
     parser.add_argument('--annotation', '-a', type=str, default=str(datetime.now().strftime("%Y-%m-%d-%H%M%S")), help='Annotation for easier manual benchmark run identification')
+    parser.add_argument('--benchmark-args', '-x', type=str, nargs='+', default='', help='Additional benchmark specific arguments')
+    parser.add_argument('--use-spdk', '-s', type=str, default='no', choices=['yes', 'no'], help='Use spdk plugin for fio(uses io_uring spdk bdev)')
     parser.add_argument('--spdk-path', type=str, help='Dir path for SPDK checkout and build. Needed only for host spdk(-c no -s yes) benchmarks')
-
     scheduler_group = parser.add_mutually_exclusive_group(required=False)
     scheduler_group.add_argument('--none-scheduler', action='store_true', help='Use none scheduler for the given drive.')
     scheduler_group.add_argument('--mq-deadline-scheduler', action='store_true', help='Use mq-deadline scheduler for the given drive.')
@@ -305,7 +289,9 @@ def main(argv):
     dev = ''
     container = args.container
     output_path = args.output
-    benches = base_benches
+    selected_benchmark = args.benchmark
+    benchmark = None
+    benchmark_args = args.benchmark_args
     run = ''
     scheduler_overwrite = None
     use_spdk = args.use_spdk
@@ -342,42 +328,38 @@ def main(argv):
         list_benchs(base_benches)
         sys.exit()
 
-    if args.benchmarks:
-        for name in args.benchmarks:
-            if name not in benchmark_names:
-                print(f"Invalid benchmark name: {name}")
-                list_benchs(base_benches)
-                sys.exit(1)
-            else:
-                if use_spdk == 'yes':
-                    if args.spdk_path is not None:
-                        if container == 'no':
-                            set_spdk_install_dir((args.spdk_path).rstrip('/'))
-                        else:
-                            print("Ignoring user provided spdk install dir for '-c yes' option.")
-                    else:
-                        if container != 'yes':
-                            print("SPDK install dir not provided!")
-                            sys.exit()
-                else:
-                    set_spdk_install_dir('')
+    for x in base_benches:
+        if x.id() == selected_benchmark:
+            benchmark = x
+    if benchmark == None:
+        print(f"Invalid benchmark name: {selected_benchmark}")
+        list_benchs(base_benches)
+        sys.exit(1)
 
-        benches = [x for x in base_benches if x.id() in args.benchmarks]
-        if len(benches) == 0:
-            list_benchs(base_benches)
-            sys.exit(1)
+    if use_spdk == 'yes':
+        if args.spdk_path is not None:
+            if container == 'no':
+                set_spdk_install_dir((args.spdk_path).rstrip('/'))
+            else:
+                print("Ignoring user provided spdk install dir for '-c yes' option.")
+        else:
+            if container != 'yes':
+                print("SPDK install dir not provided!")
+                sys.exit()
+    else:
+        set_spdk_install_dir('')
 
     if run == 'collect-results':
         collect_results_in_sqlite(output_path, results_dir)
     elif run == 'plot':
-        run_plots(csv_files, benches)
+        run_plot(csv_files, benchmark)
     elif run == 'report':
-        run_reports(report_path, benches)
+        run_report(report_path, benchmark)
     elif run == 'bench':
         run_output_relative = datetime.now().strftime("%Y-%m-%d-%H%M%S")
         run_output = "%s/%s" % (output_path, run_output_relative)
         print(f"Output directory: {run_output}")
-        run_benchmarks(dev, container, benches, output_path, run_output, scheduler_overwrite, annotation)
+        run_benchmark(dev, container, benchmark, output_path, run_output, scheduler_overwrite, annotation, benchmark_args)
     else:
         print_help()
 

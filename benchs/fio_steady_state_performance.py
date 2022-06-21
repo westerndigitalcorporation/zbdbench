@@ -34,9 +34,9 @@ class Run(Bench):
     def id(self):
         return self.jobname
 
-    def setup(self, dev, container, output):
+    def setup(self, dev, container, output, arguments):
         global device_cap
-        super(Run, self).setup(container, output)
+        super(Run, self).setup(container, output, arguments)
 
         device_cap = self.get_nvme_drive_capacity_gb(output)
         self.discard_dev(dev)

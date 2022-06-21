@@ -28,16 +28,18 @@ class Bench(object):
     container = 'no'
     # spdk folder path
     spdk_path = ''
-
+    # benchmark specific arguments
+    arguments = []
 
     # Interface to be implemented by inheriting classes
     def id(self):
         return "Generic benchmark (name)"
 
-    def setup(self, container, output):
+    def setup(self, container, output, arguments=[]):
         self.container = container
         self.output = output
         self.spdk_path = get_spdk_install_dir()
+        self.arguments = arguments
 
     def run(self):
         print("Not implemented (run)")
