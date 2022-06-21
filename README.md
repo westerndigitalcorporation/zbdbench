@@ -15,37 +15,33 @@ For release announcements and other discussions, please subscribe to this reposi
 Getting Started
 ---------------
 
-The run.py script runs a set of predefined benchmarks on a block device. Required dependencies are described at the bottom.
+The run.py script runs a predefined benchmark on a block device. Required dependencies are described at the bottom.
 
 The block device does not have to be zoned - the workloads will work
 on both types of block devices.
 
-The script performs a set of checks before running the benchmarks, such as
+The script performs a set of checks before running the benchmark, such as
 validating that it is about to write to a block device, not mounted, and ready.
 
-After all benchmarks have run, their output is availble in:
+After the benchmark has run, the output is available in:
 
     output/YYYYMMDDHHMMSS (date format is replaced with the current time)
 
 Each benchmark has a report function, which creates a csv file with the
 specific output. See the section below for the csv format for each benchmark.
 
-To execute the benchmarks, run:
+To execute the 'fio_zone_mixed' benchmark, run:
 
-    sudo ./run.py -d /dev/nvmeXnY
+    sudo ./run.py -d /dev/nvmeXnY -b fio_zone_mixed
 
 If you have the latest fio installed, you may skip the container installation and
 run the benchmarks using the system commands.
 
-    sudo ./run.py -d /dev/nvmeXnY -c system
+    sudo ./run.py -d /dev/nvmeXnY -b fio_zone_mixed -c system
 
 To list available benchmarks, run:
 
     ./run.py -l
-
-To only run a specific benchmark, append -b <benchmark_name> to the command:
-
-    sudo ./run.py -d /dev/nvmeXnY -b fio_zone_mixed
 
 Command Options
 ---------------
@@ -57,10 +53,6 @@ List available benchmarks:
 Run specific benchmark:
 
     ./run.py -b benchmark -d /dev/nvmeXnY
-
-Run all benchmarks:
-
-    ./run.py -d /dev/nvmeXnY
 
 Regenerate a report (and its plots)
 

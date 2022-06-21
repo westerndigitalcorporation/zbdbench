@@ -19,13 +19,15 @@ class DeviceScheduler(Enum):
 class Bench(object):
     # output overwritten by setup()
     output = 'output/'
+    arguments = []
 
     # Interface to be implemented by inheriting classes
     def id(self):
         return "Generic benchmark (name)"
 
-    def setup(self, output):
+    def setup(self, output, arguments=[]):
         self.output = output
+        self.arguments = arguments
 
     def run(self):
         print("Not implemented (run)")
