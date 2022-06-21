@@ -104,8 +104,8 @@ class RocksDBFillPrep(RocksDBBase):
         self.jobname = "rocksdb_fillprep"
         pass
 
-    def setup(self, dev, container, output):
-        super(RocksDBFillPrep, self).setup(container, output)
+    def setup(self, dev, container, output, arguments):
+        super(RocksDBFillPrep, self).setup(container, output, arguments)
 
         self.discard_dev(dev)
 
@@ -139,8 +139,8 @@ class RocksDBOverwrite(RocksDBBase):
         self.jobname = "rocksdb_overwrite"
         pass
 
-    def setup(self, dev, container, output):
-        super(RocksDBOverwrite, self).setup(container, output)
+    def setup(self, dev, container, output, arguments):
+        super(RocksDBOverwrite, self).setup(container, output, arguments)
 
     def run(self, dev, container):
         num = str(int(self.scale_num * 0.1))
@@ -170,8 +170,8 @@ class RocksDBReadwhilewriting(RocksDBBase):
         self.jobname = "rocksdb_readwhilewriting"
         pass
 
-    def setup(self, dev, container, output):
-        super(RocksDBReadwhilewriting, self).setup(container, output)
+    def setup(self, dev, container, output, arguments):
+        super(RocksDBReadwhilewriting, self).setup(container, output, arguments)
 
     def run(self, dev, container):
 

@@ -16,8 +16,8 @@ class Run(Bench):
     def id(self):
         return "template"
 
-    def setup(self, dev, container, output):
-        super(Run, self).setup(container, output)
+    def setup(self, dev, container, output, arguments):
+        super(Run, self).setup(container, output, arguments)
 
         self.discard_dev(dev)
 

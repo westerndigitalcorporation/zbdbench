@@ -55,37 +55,33 @@ environment, the script requires the following installed:
 Getting Started
 ---------------
 
-The run.py script runs a set of predefined benchmarks on a block device.
+The run.py script runs a predefined benchmark on a block device.
 
 The block device does not have to be zoned - the workloads will work
 on both types of block devices.
 
-The script performs a set of checks before running the benchmarks, such as
+The script performs a set of checks before running the benchmark, such as
 validating that it is about to write to a block device, not mounted, and ready.
 
-After all benchmarks have run, their output is availble in:
+After the benchmark has run, the output is available in:
 
     zbdbench_results/YYYYMMDDHHMMSS (date format is replaced with the current time)
 
 Each benchmark has a report function, which creates a csv file with the
 specific output. See the section below for the csv format for each benchmark.
 
-To execute all benchmarks, run:
+To execute the 'fio_zone_mixed' benchmark, run:
 
-    ./run.py -d /dev/nvmeXnY
+    sudo ./run.py -d /dev/nvmeXnY -b fio_zone_mixed
 
 If you have the latest fio installed, you may skip the container installation and
 run the benchmarks using the system commands.
 
-    ./run.py -d /dev/nvmeXnY -c no
+    sudo ./run.py -d /dev/nvmeXnY -b fio_zone_mixed -c no
 
 To list available benchmarks, run:
 
     ./run.py -l
-
-To only run a specific benchmark, append -b <benchmark_name> to the command:
-
-    ./run.py -d /dev/nvmeXnY -b fio_zone_mixed
 
 ## WARNING
 
@@ -118,18 +114,14 @@ Run specific benchmark:
 
     ./run.py -b benchmark -d /dev/nvmeXnY
 
-Run fio_zone_xxx benchmarks with SPDK FIO plugin(io_uring zoned bdev) in a container env.:
+Run fio_zone_xxx benchmark with SPDK FIO plugin(io_uring zoned bdev) in a container env.:
 
     ./run.py -b fio_zone_xxx --mq-deadline-scheduler -d /dev/nvmeXnY -s yes -c yes
 
-Run fio_zone_xxx benchmarks with SPDK FIO plugin(io_uring zoned bdev) directly on Host System.
+Run fio_zone_xxx benchmark with SPDK FIO plugin(io_uring zoned bdev) directly on Host System.
 Zbdbench will checkout and build SPDK(also FIO) in dir provided using --spdk-path option:
 
     ./run.py -b fio_zone_xxx --mq-deadline-scheduler -d /dev/nvmeXnY -s yes -c no --spdk-path /dir/path
-
-Run all benchmarks:
-
-    ./run.py -d /dev/nvmeXnY
 
 Regenerate a report (and its plots)
 

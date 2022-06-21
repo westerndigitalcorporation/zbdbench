@@ -178,8 +178,8 @@ class Run(Bench):
             self.run_cmd(dev, container, 'db_bench', self.get_run_string(dev, bench_params, "readwhilewriting_writelimit_%s" % runid), self.get_extra_container_params())
 
 
-    def setup(self, dev, container, output):
-        super(Run, self).setup(container, output)
+    def setup(self, dev, container, output, arguments):
+        super(Run, self).setup(container, output, arguments)
         self.discard_dev(dev)
         self.target_fz_base = self.get_target_fz_base(dev)
         if is_dev_zoned(dev):
