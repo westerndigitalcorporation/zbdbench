@@ -15,37 +15,33 @@ For release announcements and other discussions, please subscribe to this reposi
 Getting Started
 ---------------
 
-The run.py script runs a set of predefined benchmarks on a block device. Required dependencies are described at the bottom.
+The run.py script runs a predefined benchmark on a block device. Required dependencies are described at the bottom.
 
 The block device does not have to be zoned - the workloads will work
 on both types of block devices.
 
-The script performs a set of checks before running the benchmarks, such as
+The script performs a set of checks before running the benchmark, such as
 validating that it is about to write to a block device, not mounted, and ready.
 
-After all benchmarks have run, their output is availble in:
+After the benchmark has run, the output is available in:
 
     output/YYYYMMDDHHMMSS (date format is replaced with the current time)
 
 Each benchmark has a report function, which creates a csv file with the
 specific output. See the section below for the csv format for each benchmark.
 
-To execute the benchmarks, run:
+To execute the 'fio_zone_mixed' benchmark, run:
 
-    sudo ./run.py -d /dev/nvmeXnY
+    sudo ./run.py -d /dev/nvmeXnY -b fio_zone_mixed
 
 If you have the latest fio installed, you may skip the container installation and
 run the benchmarks using the system commands.
 
-    sudo ./run.py -d /dev/nvmeXnY -c system
+    sudo ./run.py -d /dev/nvmeXnY -b fio_zone_mixed -c system
 
 To list available benchmarks, run:
 
     ./run.py -l
-
-To only run a specific benchmark, append -b <benchmark_name> to the command:
-
-    sudo ./run.py -d /dev/nvmeXnY -b fio_zone_mixed
 
 Command Options
 ---------------
@@ -57,10 +53,6 @@ List available benchmarks:
 Run specific benchmark:
 
     ./run.py -b benchmark -d /dev/nvmeXnY
-
-Run all benchmarks:
-
-    ./run.py -d /dev/nvmeXnY
 
 Regenerate a report (and its plots)
 
@@ -168,6 +160,29 @@ usenix_atc_2021_zns_eval
     with the ZenFS RocksDB plugin without an additional filesystem.
 
   Note: the tests are designed to run on 2TB devices.
+
+sysbench
+  Executes a sysbench workload within a percona-server MyRocks installation.
+  For conventional devices, the default filesystem will be xfs whereas for
+  ZBD devices by default the benchmark will be issued through ZenFS, the
+  RocksDB plugin which enables direct access to zoned storage.
+  If the `-a btrfs` is supplied the benchmark will run on zoned or
+  conventional devices with btrfs as the filesystem.
+
+  The benchmark will first bulk-load the drive with a database of about 800GB.
+  10 million `db-entries` correspond to ~2GB of capacity.
+  With `200.000.000 table-size * 20 tables = 4000M db-entries` the database
+  size will result in 800GB.
+  After that the following oltp workloads are run each for 30 minutes in the
+  given order:
+  - oltp_update_index.lua
+  - oltp_update_non_index.lua
+  - oltp_delete.lua
+  - oltp_write_only.lua
+  - oltp_insert.lua
+  - oltp_read_write.lua
+  - oltp_read_only.lua
+
 
 Dependencies
 ------------

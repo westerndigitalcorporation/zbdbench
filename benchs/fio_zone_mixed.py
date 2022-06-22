@@ -15,8 +15,8 @@ class Run(Bench):
     def id(self):
         return self.jobname
 
-    def setup(self, dev, container, output):
-        super(Run, self).setup(output)
+    def setup(self, dev, container, output, arguments):
+        super(Run, self).setup(output, arguments)
 
         self.discard_dev(dev)
 

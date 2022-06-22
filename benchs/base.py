@@ -19,13 +19,15 @@ class DeviceScheduler(Enum):
 class Bench(object):
     # output overwritten by setup()
     output = 'output/'
+    arguments = []
 
     # Interface to be implemented by inheriting classes
     def id(self):
         return "Generic benchmark (name)"
 
-    def setup(self, output):
+    def setup(self, output, arguments=[]):
         self.output = output
+        self.arguments = arguments
 
     def run(self):
         print("Not implemented (run)")
@@ -44,7 +46,7 @@ class Bench(object):
 
     # Helpers
     def container_sys_cmd(self, dev, extra_params):
-        return f"podman run -v \"{dev}:{dev}\" -v \"{self.output}:/output\" {extra_params}"
+        return f"podman run --privileged -v \"{dev}:{dev}\" -v \"{self.output}:/output\" {extra_params}"
 
     def required_host_tools(self):
         return {'blkzone', 'blkdiscard'}
@@ -67,6 +69,8 @@ class Bench(object):
                 exec_cmd = 'zf2fs'
             if tool == 'mkfs.xfs':
                 exec_cmd = 'zxfs'
+            if tool == 'sysbench':
+                exec_cmd = 'zsysbench'
 
             container_cmd = self.container_sys_cmd(dev, extra_container_params)
 
