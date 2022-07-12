@@ -287,7 +287,7 @@ class Run(Bench):
 
         self.output = root_output
 
-    def report(self, path):
+    def report(self, dev, path):
         csv_files = []
         is_device_zoned = os.path.exists(os.path.join(path, "zenfs"))
         subpaths = self.get_filesystems_to_test(is_device_zoned)

@@ -90,7 +90,7 @@ class RocksDBBase(Bench):
 
                 return [i for i in line.split(' ') if i]
 
-    def report(self, path):
+    def report(self, dev, path):
         devcap = self.get_nvme_drive_capacity_gb(path)
         if devcap is None:
             print("Could not get drive capacity for report")
@@ -120,7 +120,7 @@ class RocksDBFillPrep(RocksDBBase):
 
         self.run_cmd(dev, container, 'db_bench', self.get_run_string(dev, bench_params, self.jobname))
 
-    def report(self, path):
+    def report(self, dev, path):
         filename = path + "/" + self.jobname + ".txt"
         entries = self.get_result_from_test(filename, 'fillrandom')
 
@@ -152,7 +152,7 @@ class RocksDBOverwrite(RocksDBBase):
 
         self.run_cmd(dev, container, 'db_bench', self.get_run_string(dev, bench_params, self.jobname))
 
-    def report(self, path):
+    def report(self, dev, path):
         filename = path + "/" + self.jobname + ".txt"
         entries = self.get_result_from_test(filename, 'overwrite')
 
@@ -218,7 +218,7 @@ class RocksDBReadwhilewriting(RocksDBBase):
 
         return csv_file
 
-    def report(self, path):
+    def report(self, dev, path):
         self.report_bench(path, 'readrandom', 'readrandom')
         self.report_bench(path, 'write', 'readwhilewriting')
         csv_file = self.report_bench(path, 'writelimit', 'readwhilewriting')

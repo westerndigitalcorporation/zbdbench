@@ -187,9 +187,14 @@ class Run(Bench):
         global fio_runtime
         global fio_ramptime
         extra = ''
+        output_path_prefix = "output"
+
+        if container == 'no':
+            output_path_prefix = self.output
+
 
         if not is_dev_zoned(dev):
-            print("This test is ment to be run on a zoned dev")
+            print("This test is meant to be run on a zoned dev")
             sys.exit(1)
 
         dev_number_zones = self.get_number_of_zones(dev)
@@ -224,7 +229,7 @@ class Run(Bench):
 
                 prep_param = ("--name=prep "
                             " --size=%sz"
-                            " --output output/%s_prep.log") % (increment_size, operation)
+                            " --output %s/%s_prep.log") % (increment_size, output_path_prefix, operation)
 
                 fio_param = "%s %s" % (init_param, prep_param)
 
@@ -275,7 +280,7 @@ class Run(Bench):
                                         " --time_based"
                                         " --ramp_time=%s --runtime=%s"
                                         " --percentile_list=1:5:10:20:30:40:50:60:70:80:90:99:99.9:99.99:99.999:99.9999:99.99999:100"
-                                        " --output output/%s.log") % (operation, size, fio_ramptime, fio_runtime, output_name)
+                                        " --output %s/%s.log") % (operation, size, fio_ramptime, fio_runtime, output_path_prefix, output_name)
                             fio_param = "%s %s" % (init_param, exec_param)
 
                             self.run_cmd(dev, container, 'fio', fio_param)
@@ -284,7 +289,7 @@ class Run(Bench):
     def teardown(self, dev, container):
         pass
 
-    def report(self, path):
+    def report(self, dev, path):
 
         csv_data = []
         csv_row = []

@@ -163,7 +163,7 @@ def run_benchmarks(dev, container, benches, run_output, scheduler_overwrite):
         b.setup(dev, container, run_output)
         b.run(dev, container)
         b.teardown(dev, container)
-        csv_file = b.report(run_output)
+        csv_file = b.report(dev, run_output)
         b.plot(csv_file)
 
     print("\nCompleted %s benchmark(s)" % len(benches))

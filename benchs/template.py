@@ -35,7 +35,7 @@ class Run(Bench):
     def teardown(self, dev, container):
         pass
 
-    def report(self):
+    def report(self, dev, path):
         # return csv_file
         pass
 

@@ -28,6 +28,10 @@ class Run(Bench):
     def run(self, dev, container):
         extra = ''
         max_open_zones = 14
+        output_path_prefix = "output"
+
+        if container == 'no':
+            output_path_prefix = self.output
 
         if is_dev_zoned(dev):
             # Zone Capacity (52% of zone size)
@@ -42,20 +46,20 @@ class Run(Bench):
         fio_param = ("--filename=%s"
                     " --io_size=%sk"
                     " --log_avg_msec=1000"
-                    " --write_bw_log=output/fio_zone_write"
-                    " --output=output/fio_zone_write.log"
+                    " --write_bw_log=%s/fio_zone_write"
+                    " --output=%s/fio_zone_write.log"
                     " --ioengine=libaio --direct=1 --zonemode=zbd"
                     " --name=seqwriter --rw=randwrite"
-                    " --bs=64k --max_open_zones=%s %s") % (dev, io_size, max_open_zones, extra)
+                    " --bs=64k --max_open_zones=%s %s") % (dev, io_size, output_path_prefix, output_path_prefix, max_open_zones, extra)
 
         self.run_cmd(dev, container, 'fio', fio_param)
 
     def teardown(self, dev, container):
         pass
 
-    def report(self, path):
+    def report(self, dev, path):
 
-        devcap = self.get_nvme_drive_capacity_gb(path)
+        devcap = self.get_nvme_drive_capacity_gb(dev, path)
         if devcap is None:
             print("Could not get drive capacity for report")
             sys.exit(1)
