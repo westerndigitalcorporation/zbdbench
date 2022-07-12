@@ -33,7 +33,7 @@ class Bench(object):
     def teardown(self):
         print("Not implemented (teardown)")
 
-    def report(self, path):
+    def report(self, dev, path):
         print("Not implemented (report)")
 
     def plot(self, csv_file):
@@ -44,7 +44,7 @@ class Bench(object):
 
     # Helpers
     def container_sys_cmd(self, dev, extra_params):
-        return f"podman run -v \"{dev}:{dev}\" -v \"{self.output}:/output\" {extra_params}"
+        return f"podman run --privileged -v \"{dev}:{dev}\" -v \"{self.output}:/output\" {extra_params}"
 
     def required_host_tools(self):
         return {'blkzone', 'blkdiscard'}
@@ -126,8 +126,8 @@ class Bench(object):
 
         return sectorsize
 
-    def get_nvme_drive_capacity_gb(self, path):
-        if is_dev_zoned(path):
+    def get_nvme_drive_capacity_gb(self, dev, path):
+        if is_dev_zoned(dev):
             filename = path + "/blkzone-capacity.txt"
             with open(filename, 'r') as f:
                 size_blocks = int(f.read().strip(), 0)

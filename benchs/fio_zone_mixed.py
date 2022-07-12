@@ -26,6 +26,10 @@ class Run(Bench):
     def run(self, dev, container):
         extra = ''
         max_open_zones = 14
+        output_path_prefix = "output"
+
+        if container == 'no':
+            output_path_prefix = self.output
 
         if is_dev_zoned(dev):
             # Zone Capacity (52% of zone size)
@@ -46,7 +50,7 @@ class Run(Bench):
 
         prep_param = ("--name=prep "
                     " --io_size=%sk"
-                    " --output output/%s.log") % (io_size, self.jobname)
+                    " --output %s/%s.log") % (io_size, output_path_prefix, self.jobname)
 
         mixs_param = "--name=mix_0_r --wait_for_previous --rw=randread --bs=4k --runtime=180 --ramp_time=30 --time_based --significant_figures=6 --percentile_list=1:5:10:20:30:40:50:60:70:80:90:99:99.9:99.99:99.999:99.9999:99.99999:100 "
         for s in [25, 50, 75, 100, 125, 150, 175, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:
@@ -60,7 +64,7 @@ class Run(Bench):
     def teardown(self, dev, container):
         pass
 
-    def report(self, path):
+    def report(self, dev, path):
 
         csv_data = []
         with open(path + "/" + self.jobname + ".log", 'r') as f:
