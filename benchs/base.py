@@ -126,9 +126,10 @@ class Bench(object):
 
         return sectorsize
 
-    def get_nvme_drive_capacity_gb(self, dev, path):
-        if is_dev_zoned(dev):
-            filename = path + "/blkzone-capacity.txt"
+    def get_nvme_drive_capacity_gb(self, path):
+        filename = path + "/blkzone-capacity.txt"
+        zoned_dev = os.path.exists(filename)
+        if zoned_dev:
             with open(filename, 'r') as f:
                 size_blocks = int(f.read().strip(), 0)
                 size_bytes = size_blocks / 512
