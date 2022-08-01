@@ -176,7 +176,7 @@ class Run(Bench):
         return self.jobname
 
     def setup(self, dev, container, output):
-        super(Run, self).setup(output)
+        super(Run, self).setup(output, container)
 
         self.discard_dev(dev)
 
@@ -229,7 +229,7 @@ class Run(Bench):
 
                 prep_param = ("--name=prep "
                             " --size=%sz"
-                            " --output %s/%s_prep.log") % (increment_size, output_path_prefix, operation)
+                            " --output %s/%s_prep.log") % (increment_size, self.output, operation)
 
                 fio_param = "%s %s" % (init_param, prep_param)
 
@@ -280,7 +280,7 @@ class Run(Bench):
                                         " --time_based"
                                         " --ramp_time=%s --runtime=%s"
                                         " --percentile_list=1:5:10:20:30:40:50:60:70:80:90:99:99.9:99.99:99.999:99.9999:99.99999:100"
-                                        " --output %s/%s.log") % (operation, size, fio_ramptime, fio_runtime, output_path_prefix, output_name)
+                                        " --output %s/%s.log") % (operation, size, fio_ramptime, fio_runtime, self.output, output_name)
                             fio_param = "%s %s" % (init_param, exec_param)
 
                             self.run_cmd(dev, container, 'fio', fio_param)

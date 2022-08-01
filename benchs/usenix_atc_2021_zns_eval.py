@@ -176,7 +176,7 @@ class Run(Bench):
 
 
     def setup(self, dev, container, output):
-        super(Run, self).setup(output)
+        super(Run, self).setup(output, container)
         self.discard_dev(dev)
         self.target_fz_base = self.get_target_fz_base(dev)
         if is_dev_zoned(dev):
@@ -186,7 +186,7 @@ class Run(Bench):
 
     def create_mountpoint(self, dev, filesystem):
         relative_mountpoint = "%s_%s" % (dev.strip('/dev/'), filesystem)
-        mountpoint = os.path.join(self.output, relative_mountpoint)
+        mountpoint = os.path.join(self.output_host_path, relative_mountpoint)
         os.mkdir(mountpoint)
         return mountpoint, relative_mountpoint
 
@@ -259,7 +259,10 @@ class Run(Bench):
             return self.conventional_filesystems
 
     def run(self, dev, container):
-        root_output = self.output
+        root_output = self.output_host_path
+        # Backup self.output as we will modify it
+        bkup_output = self.output
+
         is_device_zoned = is_dev_zoned(dev)
         for filesystem in self.get_filesystems_to_test(is_device_zoned):
             mountpoint = ''
@@ -285,7 +288,7 @@ class Run(Bench):
                 if self.conv_nullblk_dev != '':
                     self.destroy_nullblk_dev(self.conv_nullblk_dev)
 
-        self.output = root_output
+        self.output = bkup_output
 
     def report(self, dev, path):
         csv_files = []

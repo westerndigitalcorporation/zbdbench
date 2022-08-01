@@ -17,7 +17,7 @@ class Run(Bench):
         return "template"
 
     def setup(self, dev, container, output):
-        super(Run, self).setup(output)
+        super(Run, self).setup(output, container)
 
         self.discard_dev(dev)
 
