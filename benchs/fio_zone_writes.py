@@ -18,7 +18,7 @@ class Run(Bench):
         return self.jobname
 
     def setup(self, dev, container, output):
-        super(Run, self).setup(output)
+        super(Run, self).setup(output, container)
 
         self.discard_dev(dev)
 
@@ -42,11 +42,11 @@ class Run(Bench):
         fio_param = ("--filename=%s"
                     " --io_size=%sk"
                     " --log_avg_msec=1000"
-                    " --write_bw_log=output/fio_zone_write"
-                    " --output=output/fio_zone_write.log"
+                    " --write_bw_log=%s/fio_zone_write"
+                    " --output=%s/fio_zone_write.log"
                     " --ioengine=libaio --direct=1 --zonemode=zbd"
                     " --name=seqwriter --rw=randwrite"
-                    " --bs=64k --max_open_zones=%s %s") % (dev, io_size, max_open_zones, extra)
+                    " --bs=64k --max_open_zones=%s %s") % (dev, io_size, self.output, self.output, max_open_zones, extra)
 
         self.run_cmd(dev, container, 'fio', fio_param)
 

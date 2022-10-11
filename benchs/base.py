@@ -17,15 +17,24 @@ class DeviceScheduler(Enum):
 
 # Generic class that a benchmark definition must implement.
 class Bench(object):
-    # output overwritten by setup()
+    # Location of generated benchmark results - updated based on container=on/off option
     output = 'output/'
+    # Location of benchmark files on the host
+    output_host_path = ''
 
     # Interface to be implemented by inheriting classes
     def id(self):
         return "Generic benchmark (name)"
 
-    def setup(self, output):
-        self.output = output
+    def setup(self, output, container):
+        self.output_host_path = output
+
+        if container == 'yes':
+            # In container env, /output is mapped to host zbdbench_results/xxx
+            self.output = "output"
+        else:
+            # Non-container env directly uses the host zbdbench_results/xxx dir for benchmark results
+            self.output = output
 
     def run(self):
         print("Not implemented (run)")
@@ -44,7 +53,7 @@ class Bench(object):
 
     # Helpers
     def container_sys_cmd(self, dev, extra_params):
-        return f"podman run --privileged -v \"{dev}:{dev}\" -v \"{self.output}:/output\" {extra_params}"
+        return f"podman run --privileged -v \"{dev}:{dev}\" -v \"{self.output_host_path}:/output\" {extra_params}"
 
     def required_host_tools(self):
         return {'blkzone', 'blkdiscard'}
@@ -110,7 +119,7 @@ class Bench(object):
     def get_zone_capacity_mb(self, dev):
         devname = dev.strip('/dev/')
 
-        with open(f'{self.output}/blkzone-report.txt', 'r') as f:
+        with open(f'{self.output_host_path}/blkzone-report.txt', 'r') as f:
             capacity_blocks = int(f.readline().split()[5].strip(','), 0)
             capacity_bytes = capacity_blocks * 512
             capacity_mb = capacity_bytes / (1024**2)

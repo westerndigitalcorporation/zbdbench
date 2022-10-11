@@ -68,7 +68,7 @@ class RocksDBBase(Bench):
                       " --delete_obsolete_files_period_micros=", self.delete_obsolete_files_period, \
                       " --statistics", \
                       ''.join(bench_params), \
-                      " > ", self.output, "/", name, ".txt 2>&1"
+                      " > ", self.output_host_path, "/", name, ".txt 2>&1"
 
         return ''.join(params)
 
@@ -105,7 +105,7 @@ class RocksDBFillPrep(RocksDBBase):
         pass
 
     def setup(self, dev, container, output):
-        super(RocksDBFillPrep, self).setup(output)
+        super(RocksDBFillPrep, self).setup(output, container)
 
         self.discard_dev(dev)
 
@@ -140,7 +140,7 @@ class RocksDBOverwrite(RocksDBBase):
         pass
 
     def setup(self, dev, container, output):
-        super(RocksDBOverwrite, self).setup(output)
+        super(RocksDBOverwrite, self).setup(output, container)
 
     def run(self, dev, container):
         num = str(int(self.scale_num * 0.1))
@@ -171,7 +171,7 @@ class RocksDBReadwhilewriting(RocksDBBase):
         pass
 
     def setup(self, dev, container, output):
-        super(RocksDBReadwhilewriting, self).setup(output)
+        super(RocksDBReadwhilewriting, self).setup(output, container)
 
     def run(self, dev, container):
 
