@@ -44,7 +44,7 @@ class Bench(object):
 
     # Helpers
     def container_sys_cmd(self, dev, extra_params):
-        return f"podman run -v \"{dev}:{dev}\" -v \"{self.output}:/output\" {extra_params}"
+        return f"podman run --privileged -v \"{dev}:{dev}\" -v \"{self.output}:/output\" {extra_params}"
 
     def required_host_tools(self):
         return {'blkzone', 'blkdiscard'}
