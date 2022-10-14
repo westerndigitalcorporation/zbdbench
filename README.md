@@ -32,12 +32,12 @@ specific output. See the section below for the csv format for each benchmark.
 
 To execute the benchmarks, run:
 
-    sudo ./run.py -d /dev/nvmeXnY
+    ./run.py -d /dev/nvmeXnY
 
 If you have the latest fio installed, you may skip the container installation and
 run the benchmarks using the system commands.
 
-    sudo ./run.py -d /dev/nvmeXnY -c system
+    ./run.py -d /dev/nvmeXnY -c system
 
 To list available benchmarks, run:
 
@@ -45,7 +45,27 @@ To list available benchmarks, run:
 
 To only run a specific benchmark, append -b <benchmark_name> to the command:
 
-    sudo ./run.py -d /dev/nvmeXnY -b fio_zone_mixed
+    ./run.py -d /dev/nvmeXnY -b fio_zone_mixed
+
+## WARNING
+
+You need to have read/write permissions to the device or file you are
+targeting. Usually block devices are owned by `root` user or `disk` group. You
+can either change ownership of the block device your are testing:
+
+    sudo chown myusername /dev/nvmeXnY
+
+or make it world writable:
+
+    sudo chmod o+rw /dev/nvmeXnY
+
+Or elevate the privileges when running `zbdbench`:
+
+    sudo ./run.py <args>
+
+Please be sure that you are familiar with the security implications of the
+option you choose. If you start a test on a different block device than the one
+you intended, you may loose data and your system may fail to boot.
 
 Command Options
 ---------------
