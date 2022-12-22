@@ -30,14 +30,14 @@ After all benchmarks have run, their output is availble in:
 Each benchmark has a report function, which creates a csv file with the
 specific output. See the section below for the csv format for each benchmark.
 
-To execute the benchmarks, run:
+To execute all benchmarks, run:
 
     ./run.py -d /dev/nvmeXnY
 
 If you have the latest fio installed, you may skip the container installation and
 run the benchmarks using the system commands.
 
-    ./run.py -d /dev/nvmeXnY -c system
+    ./run.py -d /dev/nvmeXnY -c no
 
 To list available benchmarks, run:
 
@@ -217,7 +217,7 @@ environment, the script requires the following installed:
    - zrocksdb - contains rocksdb with zenfs built-in
    - zzenfs - contains the zenfs tool to inspect the zenfs file-system
 
-   The container can be installed with:
+   The containers can be installed with:
      cd recipes/docker; sudo ./build.sh
 
    The container installation can be verified by listing the image:

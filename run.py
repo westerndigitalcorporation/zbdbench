@@ -13,12 +13,13 @@ from benchs import *
 
 
 def check_dev_mounted(dev):
-    with open('/proc/mounts','r') as f:
+    with open('/proc/mounts', 'r') as f:
         if any(dev in s for s in [line.split()[0] for line in f.readlines()]):
             print("Check FAIL: %s is mounted. Exiting..." % dev)
             sys.exit(1)
 
     print('Check OK: %s is not mounted' % dev)
+
 
 def check_and_set_mqdeadline_scheduler(dev):
     devname = dev.strip('/dev/')
@@ -34,7 +35,7 @@ def check_and_set_mqdeadline_scheduler(dev):
         with open('/sys/block/%s/queue/scheduler' % devname, 'w') as f:
             f.write("mq-deadline")
 
-    with open('/sys/block/%s/queue/scheduler'% devname, 'r') as f:
+    with open('/sys/block/%s/queue/scheduler' % devname, 'r') as f:
         res = f.readline()
 
     if "[mq-deadline]" not in res:
@@ -42,6 +43,7 @@ def check_and_set_mqdeadline_scheduler(dev):
         sys.exit(1)
 
     print("Check OK: %s has been configured to use the 'mq-deadline' scheduler" % dev)
+
 
 def check_and_set_none_scheduler(dev):
     devname = dev.strip('/dev/')
@@ -66,6 +68,7 @@ def check_and_set_none_scheduler(dev):
 
     print("Check OK: %s has been configured to use the 'none' scheduler" % dev)
 
+
 def check_dev_string(dev):
     m = re.search('^/dev/\w+$', dev)
 
@@ -75,11 +78,13 @@ def check_dev_string(dev):
 
     print("Check OK: %s is valid" % dev)
 
+
 def check_dev_zoned(dev):
     if is_dev_zoned(dev):
-        print("Check OK: %s is a zoned block device" %dev)
+        print("Check OK: %s is a zoned block device" % dev)
     else:
         print("Check OK: %s is a conventional block device" % dev)
+
 
 def check_missing_programs(container, benchmarks):
 
@@ -89,8 +94,7 @@ def check_missing_programs(container, benchmarks):
     for benchmark in benchmarks:
         host_tools |= benchmark.required_host_tools()
         container_tools |= benchmark.required_container_tools()
-
-    if "system" in container:
+    if "no" in container:
         host_tools |= container_tools
     else:
         host_tools.add('podman')
@@ -101,7 +105,30 @@ def check_missing_programs(container, benchmarks):
             print(f"Check FAIL: {tool} not available")
             sys.exit(1)
 
+    if "no" not in container:
+        print(f"Required containers: {container_tools}")
+        for tool in container_tools:
+            if tool == 'fio':
+                exec_img = 'zfio'
+            if tool == 'db_bench':
+                exec_img = 'zrocksdb'
+            if tool == 'zenfs':
+                exec_img = 'zrocksdb'
+            if tool == 'mkfs.f2fs':
+                exec_img = 'zf2fs'
+            if tool == 'mkfs.xfs':
+                exec_img = 'zxfs'
+
+        p = subprocess.run(f"podman image exists {exec_img}", shell=True)
+
+        if p.returncode != 0:
+            print(f"Container image not found: {exec_img}")
+            print("See the README for how to install the required images or")
+            print("run the command with \"-c no\" to use the existing system tools.")
+            sys.exit(1)
+
     print("Check OK: All executables available")
+
 
 def create_dirs(run_output):
     if os.path.isdir(run_output):
@@ -114,6 +141,7 @@ def create_dirs(run_output):
         print("Not able to create output directory. Exiting...")
         sys.exit(1)
 
+
 def collect_info(dev, run_output):
     subprocess.check_call(f"lsblk -b {dev} > {run_output}/lsblk-capacity.txt", shell=True)
 
@@ -121,10 +149,12 @@ def collect_info(dev, run_output):
         subprocess.check_call(f"blkzone capacity {dev} > {run_output}/blkzone-capacity.txt", shell=True)
         subprocess.check_call(f"blkzone report {dev} > {run_output}/blkzone-report.txt", shell=True)
 
+
 def list_benchs(benches):
     print("\nBenchmarks:")
     for b in benches:
         print("  " + b.id())
+
 
 def check_and_set_scheduler_for_benchmark(dev, benchmark, scheduler_overwrite):
     scheduler = benchmark.get_default_device_scheduler()
@@ -134,6 +164,7 @@ def check_and_set_scheduler_for_benchmark(dev, benchmark, scheduler_overwrite):
         check_and_set_mqdeadline_scheduler(dev)
     else:
         check_and_set_none_scheduler(dev)
+
 
 def run_benchmarks(dev, container, benches, run_output, scheduler_overwrite):
     if not dev:
@@ -168,6 +199,7 @@ def run_benchmarks(dev, container, benches, run_output, scheduler_overwrite):
 
     print("\nCompleted %s benchmark(s)" % len(benches))
 
+
 def run_reports(path, benches):
     for b in benches:
         print("Generating report for: %s" % b.id())
@@ -175,10 +207,12 @@ def run_reports(path, benches):
         csv_file = b.report(path)
         b.plot(csv_file)
 
+
 def run_plots(csv_file, benches):
     for b in benches:
         print("Generating plot for: %s, %s" % (b.id(), csv_file))
         b.plot(csv_file)
+
 
 def print_help():
     print('Benchmarking')
@@ -205,8 +239,10 @@ def print_help():
     print('  Use container executables (default)')
     print('    run.py -d /dev/nvmeXnY')
 
+
 def main(argv):
     benchmark_names = [x.id() for x in base_benches]
+
     parser = argparse.ArgumentParser(description = 'Zoned Block Device Benchmark Tool', add_help=False)
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--dev', '-d', type=str, help='Path to block device used for test')
@@ -241,15 +277,15 @@ def main(argv):
     if args.mq_deadline_scheduler:
         scheduler_overwrite = DeviceScheduler.MQ_DEADLINE
 
-    if args.plot != None:
+    if args.plot is not None:
         run = 'plot'
         csv_file = args.plot
 
-    if args.report != None:
+    if args.report is not None:
         run = 'report'
         report_path = args.report
 
-    if args.dev != None:
+    if args.dev is not None:
         run = 'bench'
         dev = args.dev
 
@@ -282,6 +318,7 @@ def main(argv):
         run_benchmarks(dev, container, benches, run_output, scheduler_overwrite)
     else:
         print_help()
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])
