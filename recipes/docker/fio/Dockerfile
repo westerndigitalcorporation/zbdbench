@@ -1,7 +1,7 @@
 FROM alpine:3.13
 MAINTAINER Matias Bjørling <matias.bjorling@wdc.com>
 
-ARG VERSION=fio-3.28
+ARG VERSION=fio-3.34
 
 COPY blkzoned.h /root/blkzoned.h
 
