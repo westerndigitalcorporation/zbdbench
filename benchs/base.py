@@ -18,13 +18,16 @@ class DeviceScheduler(Enum):
 # Generic class that a benchmark definition must implement.
 class Bench(object):
     # output overwritten by setup()
-    output = 'output/'
+    output = 'zbdbench_results'
+    # container overwritten by setup()
+    container = 'no'
 
     # Interface to be implemented by inheriting classes
     def id(self):
         return "Generic benchmark (name)"
 
-    def setup(self, output):
+    def setup(self, container, output):
+        self.container = container
         self.output = output
 
     def run(self):
@@ -43,6 +46,11 @@ class Bench(object):
         return DeviceScheduler.MQ_DEADLINE
 
     # Helpers
+    def result_path(self):
+        if self.container == 'yes':
+            return "/output"
+        return self.output
+
     def container_sys_cmd(self, dev, extra_params):
         return f"podman run -v \"{dev}:{dev}\" -v \"{self.output}:/output\" {extra_params}"
 
