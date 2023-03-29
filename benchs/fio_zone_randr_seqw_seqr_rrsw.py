@@ -16,7 +16,7 @@ class Run(Bench):
         return self.jobname
 
     def setup(self, dev, container, output):
-        super(Run, self).setup(output)
+        super(Run, self).setup(container, output)
 
         self.discard_dev(dev)
 
@@ -46,13 +46,13 @@ class Run(Bench):
                     " --output-format=json"
                     " --max_open_zones=%s"
                     " --filename=%s"
-                    " --output output/%s.log"
-                    " %s") % (max_open_zones, dev, self.jobname, extra)
+                    " --output %s/%s.log"
+                    " %s") % (max_open_zones, dev, self.jobname, self.result_path(), extra)
         prep_param = ("--name=prep "
                     " --io_size=%s"
                     " --rw=write "
                     " --bs=16k --iodepth=64"
-                    " --output output/%s_prep.log") % (io_size, self.jobname)
+                    " --output %s/%s_prep.log") % (io_size, self.result_path(), self.jobname)
         fio_param = "%s %s" % (init_param, prep_param)
         self.run_cmd(dev, container, 'fio', fio_param)
 
@@ -64,8 +64,8 @@ class Run(Bench):
                     " --percentile_list=1:5:10:20:30:40:50:60:70:80:90:99:99.9:99.99:99.999:99.9999:99.99999:100"
                     " --group_reporting"
                     " --filename=%s"
-                    " --output output/%s_rr.log"
-                    " %s") % (dev, self.jobname, extra)
+                    " --output %s/%s_rr.log"
+                    " %s") % (dev, self.jobname, self.result_path(), extra)
         # Use offset2 to define size
         rr_param = (" --name=4K_R_READ_256QD_1 --offset=%sm --size=%sm --iodepth=64") % (offset1,  offset3)
         rr_param += (" --name=4K_R_READ_256QD_2 --offset=%sm --size=%sm --iodepth=64") % (offset1, offset3)

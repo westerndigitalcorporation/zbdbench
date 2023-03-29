@@ -8,8 +8,11 @@ from .base import base_benches, Bench
 from benchs.base import is_dev_zoned
 
 class Run(Bench):
+    tmp_result_path = ''
+
     def __init__(self):
         self.jobname = "usenix_atc_2021_zns_eval"
+        self.tmp_result_path = self.result_path()
 
     def id(self):
         return self.jobname
@@ -74,7 +77,7 @@ class Run(Bench):
                       " --delete_obsolete_files_period_micros=", self.delete_obsolete_files_period, \
                       " --statistics", \
                       ''.join(bench_params), \
-                      " > ", os.path.join(self.output, name + ".txt"), " 2>&1"
+                      " > ", os.path.join(self.tmp_result_path, name + ".txt"), " 2>&1"
 
         return ''.join(params)
 
@@ -176,7 +179,7 @@ class Run(Bench):
 
 
     def setup(self, dev, container, output):
-        super(Run, self).setup(output)
+        super(Run, self).setup(container, output)
         self.discard_dev(dev)
         self.target_fz_base = self.get_target_fz_base(dev)
         if is_dev_zoned(dev):
@@ -186,7 +189,7 @@ class Run(Bench):
 
     def create_mountpoint(self, dev, filesystem):
         relative_mountpoint = "%s_%s" % (dev.strip('/dev/'), filesystem)
-        mountpoint = os.path.join(self.output, relative_mountpoint)
+        mountpoint = os.path.join(self.tmp_result_path, relative_mountpoint)
         os.mkdir(mountpoint)
         return mountpoint, relative_mountpoint
 
@@ -259,13 +262,13 @@ class Run(Bench):
             return self.conventional_filesystems
 
     def run(self, dev, container):
-        root_output = self.output
+        root_output = self.tmp_result_path
         is_device_zoned = is_dev_zoned(dev)
         for filesystem in self.get_filesystems_to_test(is_device_zoned):
             mountpoint = ''
             sub_output = os.path.join(root_output, filesystem)
             os.makedirs(sub_output)
-            self.output = sub_output
+            self.tmp_result_path = sub_output
             if is_device_zoned:
                 mountpoint = self.setup_zns(dev, container, filesystem)
             else:
@@ -285,7 +288,7 @@ class Run(Bench):
                 if self.conv_nullblk_dev != '':
                     self.destroy_nullblk_dev(self.conv_nullblk_dev)
 
-        self.output = root_output
+        self.tmp_result_path = root_output
 
     def report(self, path):
         csv_files = []
