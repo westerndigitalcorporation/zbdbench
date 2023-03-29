@@ -11,11 +11,47 @@ To report a bug, file a documentation issue, or submit a feature request, please
 
 For release announcements and other discussions, please subscribe to this repository or join us on Matrix.
 
+Dependencies
+------------
+
+The benchmark tool requires Python 3.4+. In addition to a working python
+environment, the script requires the following installed:
+
+ - Linux kernel 5.9 or newer
+   - Check your loaded kernel version using:
+     `uname -a`
+
+ - nvme-cli
+   - Ubuntu: `sudo apt-get install nvme-cli`
+   - Fedora: `sudo dnf -y install nvme-cli`
+
+ - blkzone and blkdiscard (available through util-linux)
+   - Ubuntu: `sudo apt-get install util-linux`
+   - Fedora: `sudo dnf -y install util-linux-ng`
+   - CentOS: `sudo yum -y install util-linux-ng`
+
+ - a valid container (podman) environment
+   - If you do not have a container environment installed, please see [this
+     link](https://podman.io/getting-started/installation)
+
+ - installed containers:
+   - zfio - contains latest fio compiled with zone capacity support
+   - zrocksdb - contains rocksdb with zenfs built-in
+   - zzenfs - contains the zenfs tool to inspect the zenfs file-system
+
+   The containers can be installed with:
+     `cd recipes/docker; sudo ./build.sh`
+
+   The container installation can be verified by listing the image:
+     `sudo podman images`
+
+  - matplotlib
+      https://matplotlib.org/stable/users/installing.html
 
 Getting Started
 ---------------
 
-The run.py script runs a set of predefined benchmarks on a block device. Required dependencies are described at the bottom.
+The run.py script runs a set of predefined benchmarks on a block device.
 
 The block device does not have to be zoned - the workloads will work
 on both types of block devices.
@@ -189,41 +225,3 @@ usenix_atc_2021_zns_eval
 
   Note: the tests are designed to run on 2TB devices.
 
-Dependencies
-------------
-
-The benchmark tool requires Python 3.4+. In addition to a working python
-environment, the script requires the following installed:
-
- - Linux kernel 5.9 or newer
-   - Check your loaded kernel version using:
-     uname -a
-
- - nvme-cli (apt-get install nvme-cli)
-   - Ubuntu: sudo apt-get install nvme-cli
-   - Fedora: sudo dnf -y install nvme-cli
-
- - blkzone (available through util-linux)
-   - Ubuntu: sudo apt-get install util-linux
-   - Fedora: sudo dnf -y install util-linux-ng
-   - CentOS: sudo yum -y install util-linux-ng
-
- - a valid container (podman) environment
-   - If you do not have a container environment installed, please see [this
-     link](https://podman.io/getting-started/installation)
-
- - installed containers:
-   - zfio - contains latest fio compiled with zone capacity support
-   - zrocksdb - contains rocksdb with zenfs built-in
-   - zzenfs - contains the zenfs tool to inspect the zenfs file-system
-
-   The containers can be installed with:
-     cd recipes/docker; sudo ./build.sh
-
-   The container installation can be verified by listing the image:
-     sudo podman images zfio
-     sudo podman images zrocksdb
-     sudo podman images zzenfs
-
-  - matplotlib (e.g. through pip3)
-      https://matplotlib.org/stable/users/installing.html
