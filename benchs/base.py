@@ -52,7 +52,7 @@ class Bench(object):
         return self.output
 
     def container_sys_cmd(self, dev, extra_params):
-        return f"podman run -v \"{dev}:{dev}\" -v \"{self.output}:/output\" {extra_params}"
+        return f"podman run --device={dev}:{dev} -v \"{self.output}:/output\" --security-opt unmask=/sys/dev/block {extra_params}"
 
     def required_host_tools(self):
         return {'blkzone', 'blkdiscard'}
