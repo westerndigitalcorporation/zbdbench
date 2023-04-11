@@ -159,6 +159,11 @@ class Bench(object):
         else:
             subprocess.check_call("blkdiscard %s" % dev, shell=True)
 
+    def safe_csv_metadata(self, filename, content):
+        with open(os.path.join(self.output, filename), 'w') as f:
+            w = csv.writer(f, delimiter=";")
+            w.writerow(content)
+
     def run_cmd(self, dev, container, tool, tool_params, extra_container_params=''):
         cmd = "%s %s" % (self.sys_cmd(tool, dev, container, extra_container_params), tool_params)
 
