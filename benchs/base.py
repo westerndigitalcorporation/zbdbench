@@ -174,6 +174,7 @@ class Bench(object):
 #            sys.exit(1)
 
         subprocess.check_call(cmd, shell=True)
+        return cmd
 
 # Generic Plot class that supplies rudimentary matplotlib helper functions
 class Plot(object):
