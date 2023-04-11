@@ -11,6 +11,9 @@ from datetime import datetime
 from benchs.base import base_benches, is_dev_zoned, DeviceScheduler
 from benchs import *
 
+def get_zbdbench_version():
+    version_process = subprocess.Popen(["git", "describe", "--abbrev=7", "--dirty", "--always"], stdout=subprocess.PIPE)
+    return version_process.communicate()[0].strip().decode('ascii')
 
 def check_dev_mounted(dev):
     with open('/proc/mounts', 'r') as f:
