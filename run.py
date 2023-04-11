@@ -144,14 +144,33 @@ def create_dirs(run_output):
         print("Not able to create output directory. Exiting...")
         sys.exit(1)
 
-
-def collect_info(dev, run_output):
+def gather_device_info(dev, run_output):
     subprocess.check_call(f"lsblk -b {dev} > {run_output}/lsblk-capacity.txt", shell=True)
+    subprocess.check_call(f"udevadm info --query=all --name={dev} > {run_output}/udevadm-info.txt", shell=True)
 
     if is_dev_zoned(dev):
         subprocess.check_call(f"blkzone capacity {dev} > {run_output}/blkzone-capacity.txt", shell=True)
         subprocess.check_call(f"blkzone report {dev} > {run_output}/blkzone-report.txt", shell=True)
 
+def gather_benchmark(run_output, benchmark):
+    subprocess.check_call(f"echo {benchmark} > {run_output}/benchmark.txt", shell=True)
+
+def gather_benchmark_call(run_output):
+    benchmark_call = " ".join(sys.argv)
+    subprocess.check_call(f"echo {benchmark_call} > {run_output}/benchmark_call.txt", shell=True)
+
+def gather_system_meminfo(run_output):
+    subprocess.check_call(f"free -h > {run_output}/system_meminfo.txt", shell=True)
+
+def gather_system_cpuinfo(run_output):
+    subprocess.check_call(f"lscpu > {run_output}/system_cpuinfo.txt", shell=True)
+
+def gather_user_annotation(run_output, annotation):
+    subprocess.check_call(f"echo {annotation} > {run_output}/user_annotation.txt", shell=True)
+
+def gather_zbdbench_version(run_output):
+    zbdbench_version = get_zbdbench_version()
+    subprocess.check_call(f"echo {zbdbench_version} > {run_output}/zbdbench_version.txt", shell=True)
 
 def list_benchs(benches):
     print("\nBenchmarks:")
@@ -169,7 +188,7 @@ def check_and_set_scheduler_for_benchmark(dev, benchmark, scheduler_overwrite):
         check_and_set_none_scheduler(dev)
 
 
-def run_benchmarks(dev, container, benches, run_output, scheduler_overwrite):
+def run_benchmarks(dev, container, benches, run_output, scheduler_overwrite, annotation):
     if not dev:
         print('No device name provided for benchmark')
         print('ex. run.py /dev/nvmeXnY')
@@ -185,13 +204,19 @@ def run_benchmarks(dev, container, benches, run_output, scheduler_overwrite):
 
     create_dirs(run_output)
 
-    collect_info(dev, run_output)
+    gather_benchmark_call(run_output)
+    gather_device_info(dev, run_output)
+    gather_system_meminfo(run_output)
+    gather_system_cpuinfo(run_output)
+    gather_user_annotation(run_output, annotation)
+    gather_zbdbench_version(run_output)
 
     print("\nDev: %s" % dev)
     print("Env: %s" % container)
     print("Output: %s\n" % run_output)
 
     for b in benches:
+        gather_benchmark(run_output, b.id())
         print("Executing: %s" % b.id())
         check_and_set_scheduler_for_benchmark(dev, b, scheduler_overwrite)
         b.setup(dev, container, run_output)
@@ -256,11 +281,13 @@ def main(argv):
     parser.add_argument('--container', '-c', type=str, default='yes', choices=['yes', 'no'], help='Use containerized binaries or system binaries')
     parser.add_argument('--benchmarks', '-b', type=str, nargs='+', metavar='NAME', help='Benchmarks to run')
     parser.add_argument('--output', '-o', type=str, default=os.path.join(os.getcwd(), 'zbdbench_results'), help='Directory to place results. Will be created if it does not exist')
+    parser.add_argument('--annotation', '-a', type=str, default=str(datetime.now().strftime("%Y-%m-%d-%H%M%S")), help='Annotation for easier manual benchmark run identification')
     scheduler_group = parser.add_mutually_exclusive_group(required=False)
     scheduler_group.add_argument('--none-scheduler', action='store_true', help='Use none scheduler for the given drive.')
     scheduler_group.add_argument('--mq-deadline-scheduler', action='store_true', help='Use mq-deadline scheduler for the given drive.')
     args = parser.parse_args()
 
+    annotation = args.annotation
     dev = ''
     container = args.container
     output_path = args.output
@@ -316,7 +343,7 @@ def main(argv):
         run_output_relative = datetime.now().strftime("%Y-%m-%d-%H%M%S")
         run_output = "%s/%s" % (output_path, run_output_relative)
         print(f"Output directory: {run_output}")
-        run_benchmarks(dev, container, benches, run_output, scheduler_overwrite)
+        run_benchmarks(dev, container, benches, run_output, scheduler_overwrite, annotation)
     else:
         print_help()
 
