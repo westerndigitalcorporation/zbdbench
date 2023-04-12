@@ -238,14 +238,15 @@ def run_reports(path, benches):
     for b in benches:
         print("Generating report for: %s" % b.id())
 
-        csv_file = b.report(path)
-        b.plot(csv_file)
+        csv_files = []
+        csv_files.append(b.report(path))
+        b.plot(csv_files)
 
 
-def run_plots(csv_file, benches):
+def run_plots(csv_files, benches):
     for b in benches:
-        print("Generating plot for: %s, %s" % (b.id(), csv_file))
-        b.plot(csv_file)
+        print("Generating plot for: %s, %s" % (b.id(), csv_files))
+        b.plot(csv_files)
 
 
 def print_help():
@@ -283,7 +284,7 @@ def main(argv):
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--dev', '-d', type=str, help='Path to block device used for test')
     group.add_argument('--report', '-r', type=str, metavar='PATH', help='Generate reports')
-    group.add_argument('--plot', '-p', type=str, metavar='OUTPUT_CSV', help='Generate plots')
+    group.add_argument('--plot', '-p', type=str, nargs='+', help='Generate plots')
     group.add_argument('--list-benchmarks', '-l', action='store_true', help='List available benchmarks')
     group.add_argument('--help', '-h', action='store_true', help='Print help message and exit')
     group.add_argument('--collect-results', type=str, help='Collect benchmark results of the specified path within this argument in a MySQL database which is specified by the mysql.conf file.')
@@ -322,7 +323,7 @@ def main(argv):
 
     if args.plot != None:
         run = 'plot'
-        csv_file = args.plot
+        csv_files = args.plot
 
     if args.report is not None:
         run = 'report'
@@ -351,7 +352,7 @@ def main(argv):
     if run == 'collect-results':
         collect_results_in_sqlite(output_path, results_dir)
     elif run == 'plot':
-        run_plots(csv_file, benches)
+        run_plots(csv_files, benches)
     elif run == 'report':
         run_reports(report_path, benches)
     elif run == 'bench':

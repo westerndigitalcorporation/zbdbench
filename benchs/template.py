@@ -39,9 +39,11 @@ class Run(Bench):
         # return csv_file
         pass
 
-    def plot(self, csv_file):
-        plot = BenchPlot(csv_file)
-        plot.myplot()
+    def plot(self, csv_files):
+        from plotter import matplotlib_plotter
+        plot = matplotlib_plotter.Plot(self.output, csv_files)
+        #Implement plotting in plot.gen_TEMPLATE
+        plot.gen_TEMPLATE()
 
 # Uncomment to enable benchmark
 #base_benches.append(Run())
