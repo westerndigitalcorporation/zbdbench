@@ -2,14 +2,13 @@ import csv
 import sys
 import glob
 import os
-#import matplotlib.pyplot as plt
 from datetime import datetime
-from .base import base_benches, Bench, Plot, DeviceScheduler
+from .base import base_benches, Bench, DeviceScheduler
 from benchs.base import is_dev_zoned
 
 operation_list = ["read", "randread", "write"]
-number_parallel_jobs_list = [1, 2, 4, 8, 14, 16, 32, 64, 128]
-queue_depth_list = [1, 2, 4, 8, 14, 16, 32, 64, 128]
+number_parallel_jobs_list = [1, 2, 4, 8, 16, 32, 64, 128]
+queue_depth_list = [1, 2, 4, 8, 16, 32, 64, 128]
 block_size_list = ["4K", "8K", "16K", "32K", "64K", "128K"]
 block_size_K_list = [str(x[:-1]) for x in block_size_list]
 fio_runtime = "30"
@@ -25,11 +24,6 @@ offset_increment = "0z"
 fio_metadata_header = ['cmd', 'fio_run_start_time', 'ioengine', 'direct', 'zonemode', 'output_format', 'max_open_zones', 'filename', 'rw', 'bs', 'offset_increment', 'iodepth', 'numjobs', 'name', 'size', 'time_based', 'ramp_time', 'runtime']
 fio_terse_header = ['terse_version_3', 'fio_version', 'jobname', 'groupid', 'error', 'read_kb', 'read_bandwidth_kb', 'read_iops', 'read_runtime_ms', 'read_slat_min_us', 'read_slat_max_us', 'read_slat_mean_us', 'read_slat_dev_us', 'read_clat_min_us', 'read_clat_max_us', 'read_clat_mean_us', 'read_clat_dev_us', 'read_clat_pct01', 'read_clat_pct02', 'read_clat_pct03', 'read_clat_pct04', 'read_clat_pct05', 'read_clat_pct06', 'read_clat_pct07', 'read_clat_pct08', 'read_clat_pct09', 'read_clat_pct10', 'read_clat_pct11', 'read_clat_pct12', 'read_clat_pct13', 'read_clat_pct14', 'read_clat_pct15', 'read_clat_pct16', 'read_clat_pct17', 'read_clat_pct18', 'read_clat_pct19', 'read_clat_pct20', 'read_tlat_min_us', 'read_lat_max_us', 'read_lat_mean_us', 'read_lat_dev_us', 'read_bw_min_kb', 'read_bw_max_kb', 'read_bw_agg_pct', 'read_bw_mean_kb', 'read_bw_dev_kb', 'write_kb', 'write_bandwidth_kb', 'write_iops', 'write_runtime_ms', 'write_slat_min_us', 'write_slat_max_us', 'write_slat_mean_us', 'write_slat_dev_us', 'write_clat_min_us', 'write_clat_max_us', 'write_clat_mean_us', 'write_clat_dev_us', 'write_clat_pct01', 'write_clat_pct02', 'write_clat_pct03', 'write_clat_pct04', 'write_clat_pct05', 'write_clat_pct06', 'write_clat_pct07', 'write_clat_pct08', 'write_clat_pct09', 'write_clat_pct10', 'write_clat_pct11', 'write_clat_pct12', 'write_clat_pct13', 'write_clat_pct14', 'write_clat_pct15', 'write_clat_pct16', 'write_clat_pct17', 'write_clat_pct18', 'write_clat_pct19', 'write_clat_pct20', 'write_tlat_min_us', 'write_lat_max_us', 'write_lat_mean_us', 'write_lat_dev_us', 'write_bw_min_kb', 'write_bw_max_kb', 'write_bw_agg_pct', 'write_bw_mean_kb', 'write_bw_dev_kb', 'cpu_user', 'cpu_sys', 'cpu_csw', 'cpu_mjf', 'cpu_minf', 'iodepth_1', 'iodepth_2', 'iodepth_4', 'iodepth_8', 'iodepth_16', 'iodepth_32', 'iodepth_64', 'lat_2us', 'lat_4us', 'lat_10us', 'lat_20us', 'lat_50us', 'lat_100us', 'lat_250us', 'lat_500us', 'lat_750us', 'lat_1000us', 'lat_2ms', 'lat_4ms', 'lat_10ms', 'lat_20ms', 'lat_50ms', 'lat_100ms', 'lat_250ms', 'lat_500ms', 'lat_750ms', 'lat_1000ms', 'lat_2000ms', 'lat_over_2000ms', 'disk_name', 'disk_read_iops', 'disk_write_iops', 'disk_read_merges', 'disk_write_merges', 'disk_read_ticks', 'write_ticks', 'disk_queue_time', 'disk_util']
 csv_header = fio_terse_header + fio_metadata_header
-
-class BenchPlot(Plot):
-    def __init__(self, csv_file):
-        super().__init__(csv_file)
-        self.headline_additions = ""
 
 class Run(Bench):
     jobname = "fio_zone_throughput_avg_lat"
@@ -254,10 +248,11 @@ class Run(Bench):
         print(f"  Output written to: {csv_file}")
         return csv_file
 
-    def plot(self, csv_file):
-        return
-        #TODO: fix the plots for this benchmark
-        plot = BenchPlot(csv_file)
+    def plot(self, csv_files):
+        from plotter import matplotlib_plotter
+        plot = matplotlib_plotter.Plot(self.output, csv_files)
+        for op in operation_list:
+            plot.gen_FIO_ZONE_THROUGHPUT_AVG_LAT(op)
         print("  Done generateing graphs")
 
 base_benches.append(Run())

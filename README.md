@@ -45,8 +45,11 @@ environment, the script requires the following installed:
    The container installation can be verified by listing the image:
      `sudo podman images`
 
-  - matplotlib
-      https://matplotlib.org/stable/users/installing.html
+  - matplotlib and pandas for graph plotting
+    ```
+    sudo pip install matplotlib
+    sudo pip install pandas
+    ```
 
 Getting Started
 ---------------
