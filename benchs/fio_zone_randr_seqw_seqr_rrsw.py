@@ -10,7 +10,7 @@ class Run(Bench):
         pass
 
     def get_default_device_scheduler(self):
-        return DeviceScheduler.NONE
+        return DeviceScheduler.MQ_DEADLINE
 
     def id(self):
         return self.jobname
