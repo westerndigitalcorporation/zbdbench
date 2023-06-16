@@ -140,9 +140,9 @@ Overwrite benchmark run with the mq-deadline device scheduler:
 Benchmarks
 ----------
 
-All fio benchmarks are setting the none scheduler by default.
+All fio benchmarks are setting the none scheduler by default if the iodepth is 1.
 
-fio_zone_write
+## fio_zone_write
   - executes a fio workload that writes sequential to 14 zones in parallel and
     while writing 6 times the capacity of the device.
 
@@ -150,7 +150,7 @@ fio_zone_write
     1. written_gb: gigabytes written (GB)
     2. write_avg_mbs: average throughput (MB/s)
 
-fio_zone_mixed
+## fio_zone_mixed
   - executes a fio workload that first preconditions the block device to steady
     state. Then rate limited writes are issued, in which 4KB random reads
     are issued in parallel. The average latency for the 4KB random read is
@@ -168,7 +168,7 @@ fio_zone_mixed
        misleading, as the write throughput requested has not been possible to
        achieve.
 
-fio_zone_randr_seqw_seqr_rrsw
+## fio_zone_randr_seqw_seqr_rrsw
   - executes a fio workload that first preconditions the block device to steady
     state. Then it executes the following workloads:
     1. 4K_R_READ_256QD: Runs a random read workload with bs=4K, QD 256.
@@ -189,7 +189,7 @@ fio_zone_randr_seqw_seqr_rrsw
     *NOTE: For workload 3, the read and write percentiles are reported
            seperately in 2 lines in the csv.
 
-fio_zone_throughput_avg_lat
+## fio_zone_throughput_avg_lat
   - Executes all combinations of the following workloads report the throughput
     and latency in the csv report (Note: 14 is a possible value for max_open_zones):
       - Sequential read, random read, sequential write
@@ -212,7 +212,7 @@ fio_zone_throughput_avg_lat
 
   - Generates multiple graphs that plot the behavior of throughput and latency.
 
-usenix_atc_2021_zns_eval
+## usenix_atc_2021_zns_eval
   Executes RocksDB's db_bench according to the RocksDB evaluation section
   (5.2 RocksDB) of the paper '[ZNS: Avoiding the Block Interface Tax for
   Flash-based SSDs](https://www.pdl.cmu.edu/PDL-FTP/Storage/USENIX_ATC_2021_ZNS.pdf)'.
