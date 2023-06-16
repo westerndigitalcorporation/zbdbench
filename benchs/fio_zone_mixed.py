@@ -37,23 +37,48 @@ class Run(Bench):
 
         io_size = int(((self.get_dev_size(dev) * zonecap) / 100) * 2)
 
-        init_param = ("--ioengine=io_uring --direct=1 --zonemode=zbd"
-                    " --output-format=json"
-                    " --max_open_zones=%s"
-                    " --filename=%s "
-                    " --rw=randwrite --bs=16k --iodepth=8"
-                    " %s") % (max_open_zones, dev, extra)
+        init_param = (f"--ioengine=io_uring"
+                      f" --direct=1"
+                      f" --zonemode=zbd"
+                      f" --output-format=json"
+                      f" --max_open_zones={max_open_zones}"
+                      f" --filename={dev}"
+                      f" --rw=randwrite"
+                      f" --bs=16k"
+                      f" --iodepth=8"
+                      f" {extra}")
 
-        prep_param = ("--name=prep "
-                    " --io_size=%sk"
-                    " --output %s/%s.log") % (io_size, self.result_path(), self.jobname)
+        prep_param = (f"--name=prep"
+                      f" --io_size={io_size}k"
+                      f" --output {self.result_path()}/{self.jobname}.log")
 
-        mixs_param = "--name=mix_0_r --wait_for_previous --rw=randread --bs=4k --runtime=180 --ramp_time=30 --time_based --significant_figures=6 --percentile_list=1:5:10:20:30:40:50:60:70:80:90:99:99.9:99.99:99.999:99.9999:99.99999:100 "
+        mixs_param = ("--name=mix_0_r"
+                      " --wait_for_previous"
+                      " --rw=randread"
+                      " --bs=4k"
+                      " --runtime=180"
+                      " --ramp_time=30"
+                      " --time_based"
+                      " --significant_figures=6"
+                      " --percentile_list=1:5:10:20:30:40:50:60:70:80:90:99:99.9:99.99:99.999:99.9999:99.99999:100")
         for s in [25, 50, 75, 100, 125, 150, 175, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:
-            mixs_param += ("--name=mix_%s_w --wait_for_previous --rate=%sm --iodepth=8 --bs=16k --runtime=180 --time_based"
-                " --name=mix_%s_r --rw=randread --bs=4k --runtime=180 --ramp_time=30 --time_based --significant_figures=6 --percentile_list=1:5:10:20:30:40:50:60:70:80:90:99:99.9:99.99:99.999:99.9999:99.99999:100 ") % (s, s, s)
+            mixs_param += (f" --name=mix_{s}_w"
+                           f" --wait_for_previous"
+                           f" --rate={s}m"
+                           f" --iodepth=8"
+                           f" --bs=16k"
+                           f" --runtime=180"
+                           f" --time_based"
+                           f" --name=mix_{s}_r"
+                           f" --rw=randread"
+                           f" --bs=4k"
+                           f" --runtime=180"
+                           f" --ramp_time=30"
+                           f" --time_based"
+                           f" --significant_figures=6"
+                           f" --percentile_list=1:5:10:20:30:40:50:60:70:80:90:99:99.9:99.99:99.999:99.9999:99.99999:100")
 
-        fio_param = "%s %s %s" % (init_param, prep_param, mixs_param)
+        fio_param = f"{init_param} {prep_param} {mixs_param}"
 
         self.run_cmd(dev, container, 'fio', fio_param)
 
@@ -118,7 +143,7 @@ class Run(Bench):
                         'clat_p99.9999_us', 'clat_p99.99999_us', 'clat_max_us'])
             w.writerows(csv_data)
 
-        print("  Output written to: %s" % csv_file)
+        print(f"  Output written to: {csv_file}")
         return csv_file
 
 base_benches.append(Run())
