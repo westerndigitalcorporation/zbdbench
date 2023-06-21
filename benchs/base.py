@@ -139,14 +139,14 @@ class Bench(object):
         if zoned_dev:
             with open(filename, 'r') as f:
                 size_blocks = int(f.read().strip(), 0)
-                size_bytes = size_blocks / 512
-                size_gb = size_bytes / (1024^3)
+                size_bytes = size_blocks / 2
+                size_gb = size_bytes / (1024 * 1024)
                 return size_gb
         else:
             filename = path + "/lsblk-capacity.txt"
             lines = [l for l in fileinput.input(filename)]
             size_bytes = lines[1].split()[3]
-            size_gb = size_bytes / (1024^3)
+            size_gb = size_bytes / (1024 * 1024 * 1024)
             return size_gb
 
     def discard_dev(self, dev):

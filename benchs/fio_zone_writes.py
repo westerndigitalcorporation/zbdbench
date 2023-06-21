@@ -61,7 +61,7 @@ class Run(Bench):
 
     def report(self, path):
 
-        devcap = self.get_nvme_drive_capacity_gb(path)
+        devcap = int(self.get_nvme_drive_capacity_gb(path))
         if devcap is None:
             print("Could not get drive capacity for report")
             sys.exit(1)
