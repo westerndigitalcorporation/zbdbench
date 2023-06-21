@@ -47,12 +47,12 @@ class Run(Bench):
                     " --max_open_zones=%s"
                     " --filename=%s"
                     " --output %s/%s.log"
-                    " %s") % (max_open_zones, dev, self.jobname, self.result_path(), extra)
+                    " %s") % (max_open_zones, dev, self.result_path(), self.jobname, extra)
         prep_param = ("--name=prep "
                     " --io_size=%s"
                     " --rw=write "
                     " --bs=16k --iodepth=64"
-                    " --output %s/%s_prep.log") % (io_size, self.result_path(), self.jobname)
+                    " --output %s/%s_prep.log") % (io_size, self.jobname, self.result_path())
         fio_param = "%s %s" % (init_param, prep_param)
         self.run_cmd(dev, container, 'fio', fio_param)
 
