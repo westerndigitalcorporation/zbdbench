@@ -3,6 +3,7 @@ import csv
 from .base import base_benches, Bench, DeviceScheduler
 from benchs.base import is_dev_zoned
 
+
 class Run(Bench):
     jobname = "fio_zone_randr_seqw_seqr_rrsw"
 
@@ -21,7 +22,7 @@ class Run(Bench):
         self.discard_dev(dev)
 
     def required_container_tools(self):
-        return super().required_container_tools() |  {'fio'}
+        return super().required_container_tools() | {'fio'}
 
     def run(self, dev, container):
         extra = ''
@@ -29,11 +30,11 @@ class Run(Bench):
 
         if is_dev_zoned(dev):
             # Zone Capacity (52% of zone size)
-            zonecap=52
+            zonecap = 52
             io_size = int(((self.get_zone_capacity_mb(dev) * self.get_number_of_zones(dev) * 1024 * 1024) * 3))
         else:
             # Zone Size = Zone Capacity on a conv. drive
-            zonecap=100
+            zonecap = 100
             extra = '--zonesize=1102848k'
             io_size = int(((self.get_dev_size(dev) * zonecap) / 100) * 3)
         # Get correct offset to avoid rounding up/down msg from fio, which causes parsing issues
@@ -59,13 +60,13 @@ class Run(Bench):
         print("Prep Done...")
 
         init_param_rr = ("--ioengine=io_uring --direct=1 --zonemode=zbd"
-                    " --output-format=json"
-                    " --rw=randread --bs=4k --ramp_time=30 --time_based --runtime=180 --significant_figures=6"
-                    " --percentile_list=1:5:10:20:30:40:50:60:70:80:90:99:99.9:99.99:99.999:99.9999:99.99999:100"
-                    " --group_reporting"
-                    " --filename=%s"
-                    " --output %s/%s_rr.log"
-                    " %s") % (dev, self.jobname, self.result_path(), extra)
+                         " --output-format=json"
+                         " --rw=randread --bs=4k --ramp_time=30 --time_based --runtime=180 --significant_figures=6"
+                         " --percentile_list=1:5:10:20:30:40:50:60:70:80:90:99:99.9:99.99:99.999:99.9999:99.99999:100"
+                         " --group_reporting"
+                         " --filename=%s"
+                         " --output %s/%s_rr.log"
+                         " %s") % (dev, self.jobname, self.result_path(), extra)
         # Use offset2 to define size
         rr_param = (" --name=4K_R_READ_256QD_1 --offset=%sm --size=%sm --iodepth=64") % (offset1,  offset3)
         rr_param += (" --name=4K_R_READ_256QD_2 --offset=%sm --size=%sm --iodepth=64") % (offset1, offset3)
@@ -128,7 +129,6 @@ class Run(Bench):
                 trr = [read_avg_bw, read_lat_us, write_avg_bw, write_lat_us, read_iops, write_iops]
                 trr.extend(prr)
                 csv_data.append(trr)
-                
 
         with open(path + "/" + self.jobname + ".log", 'r') as f:
             data = json.load(f)
@@ -169,7 +169,6 @@ class Run(Bench):
                 tr.extend(pr)
                 csv_data.append(tr)
 
-
             if "WRITE" in job['jobname']:
                 pw.append(int(job['write']['bw']) / 1000)
                 pw.append(int(job['write']['clat_ns']['percentile']['1.000000']) / 1000)
@@ -194,7 +193,6 @@ class Run(Bench):
                 tw.extend(pw)
                 csv_data.append(tw)
 
-         
         csv_file = path + "/" + self.jobname + ".csv"
         with open(csv_file, 'w') as f:
             w = csv.writer(f, delimiter=',')
@@ -207,5 +205,6 @@ class Run(Bench):
 
         print("  Output written to: %s" % csv_file)
         return csv_file
+
 
 base_benches.append(Run())
