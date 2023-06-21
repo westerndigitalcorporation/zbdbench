@@ -137,44 +137,6 @@ Overwrite benchmark run with the mq-deadline device scheduler:
 
     ./run.py -b benchmark -d /dev/nvmeXnY --mq-deadline-scheduler
 
-SQLite data collector
-----------------------
-Benchmarks can implement to collect their CSV report into a SQLite database.
-See `data_collector/sqlite_data_collector.py`
-
-The database file `data-collection.sqlite3` will be created/modified in the
-given output directory (by default `zbdbench_results`)
-
-The database design is keeped in an easy format. Each ZBDBench benchmarking run
-causes an entry in the `zbdbench_run` table which collects general system
-information.
-Each ZBDBench run can generate multiple results that are collected in a
-benchmark specific table (e.g. `fio_zone_throughput_avg_lat`)
-
-TODO: Add graph for the database layout
-
-In case you want to connect your SQLite DB with Excel you need to install the
-MySQL ODBC https://dev.mysql.com/downloads/connector/odbc/ .
-
-On MacOS also install iOBDC http://www.iodbc.org/dataspace/doc/iodbc/wiki/iodbcWiki/Downloads .
-Copy /usr/local/mysql-connector-odbc-8.0.12-macos10.13-x86-64bit to
-/Library/ODBC and adjust /Library/ODBC/odbcinst.init
-https://stackoverflow.com/questions/52896893/macos-connector-mysql-odbc-driver-could-not-be-loaded-in-excel-for-mac-2016 .
-
-In the 'ODBC Data Source Administrator' a 'User DSN' needs to be created with the
-following keywords and values:
-```
-SERVER <IP>
-NO_SCHEMA 1
-```
-
-Within Excel in the 'Data' tab you can 'Get Data' 'From Database (Microsoft Query)' with
-the specified 'User DSN' and the following query:
-
-```
-SELECT * FROM fio_zone_throughput_avg_lat INNER JOIN zbdbench_run ON fio_zone_throughput_avg_lat.zbdbench_run_id = zbdbench_run.id;
-```
-
 Benchmarks
 ----------
 
@@ -266,3 +228,40 @@ usenix_atc_2021_zns_eval
 
   Note: the tests are designed to run on 2TB devices.
 
+Advance Data Analysis using SQLite
+----------------------
+Benchmarks can implement to collect their CSV report into a SQLite database.
+See `data_collector/sqlite_data_collector.py`
+
+The database file `data-collection.sqlite3` will be created/modified in the
+given output directory (by default `zbdbench_results`)
+
+The database design is keeped in an easy format. Each ZBDBench benchmarking run
+causes an entry in the `zbdbench_run` table which collects general system
+information.
+Each ZBDBench run can generate multiple results that are collected in a
+benchmark specific table (e.g. `fio_zone_throughput_avg_lat`)
+
+TODO: Add graph for the database layout
+
+In case you want to connect your SQLite DB with Excel you need to install the
+MySQL ODBC https://dev.mysql.com/downloads/connector/odbc/ .
+
+On MacOS also install iOBDC http://www.iodbc.org/dataspace/doc/iodbc/wiki/iodbcWiki/Downloads .
+Copy /usr/local/mysql-connector-odbc-8.0.12-macos10.13-x86-64bit to
+/Library/ODBC and adjust /Library/ODBC/odbcinst.init
+https://stackoverflow.com/questions/52896893/macos-connector-mysql-odbc-driver-could-not-be-loaded-in-excel-for-mac-2016 .
+
+In the 'ODBC Data Source Administrator' a 'User DSN' needs to be created with the
+following keywords and values:
+```
+SERVER <IP>
+NO_SCHEMA 1
+```
+
+Within Excel in the 'Data' tab you can 'Get Data' 'From Database (Microsoft Query)' with
+the specified 'User DSN' and the following query:
+
+```
+SELECT * FROM fio_zone_throughput_avg_lat INNER JOIN zbdbench_run ON fio_zone_throughput_avg_lat.zbdbench_run_id = zbdbench_run.id;
+```
