@@ -4,6 +4,7 @@ from statistics import mean
 from .base import base_benches, Bench, DeviceScheduler
 from benchs.base import is_dev_zoned
 
+
 class Run(Bench):
     jobname = "fio_zone_write"
     loops = 6
@@ -23,7 +24,7 @@ class Run(Bench):
         self.discard_dev(dev)
 
     def required_container_tools(self):
-        return super().required_container_tools() |  {'fio'}
+        return super().required_container_tools() | {'fio'}
 
     def run(self, dev, container):
         extra = ''
@@ -31,27 +32,27 @@ class Run(Bench):
 
         if is_dev_zoned(dev):
             # Zone Capacity (52% of zone size)
-            zonecap=52
+            zonecap = 52
         else:
             # Zone Size = Zone Capacity on a conv. drive
-            zonecap=100
+            zonecap = 100
             extra = '--zonesize=1102848k'
 
         io_size = int(((self.get_dev_size(dev) * zonecap) / 100) * self.loops)
 
         fio_param = ("--filename=%s"
-                    " --io_size=%sk"
-                    " --log_avg_msec=1000"
-                    " --write_bw_log=%s/fio_zone_write"
-                    " --output=%s/fio_zone_write.log"
-                    " --ioengine=libaio --direct=1 --zonemode=zbd"
-                    " --name=seqwriter --rw=randwrite"
-                    " --bs=64k --max_open_zones=%s %s") % (dev,
-                                                           io_size,
-                                                           self.result_path(),
-                                                           self.result_path(),
-                                                           max_open_zones,
-                                                           extra)
+                     " --io_size=%sk"
+                     " --log_avg_msec=1000"
+                     " --write_bw_log=%s/fio_zone_write"
+                     " --output=%s/fio_zone_write.log"
+                     " --ioengine=libaio --direct=1 --zonemode=zbd"
+                     " --name=seqwriter --rw=randwrite"
+                     " --bs=64k --max_open_zones=%s %s") % (dev,
+                                                            io_size,
+                                                            self.result_path(),
+                                                            self.result_path(),
+                                                            max_open_zones,
+                                                            extra)
 
         self.run_cmd(dev, container, 'fio', fio_param)
 
@@ -102,5 +103,6 @@ class Run(Bench):
 
         print("  Output written to: %s" % csv_file)
         return csv_file
+
 
 base_benches.append(Run())
