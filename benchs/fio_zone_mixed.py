@@ -3,6 +3,7 @@ import csv
 from .base import base_benches, Bench, DeviceScheduler
 from benchs.base import is_dev_zoned
 
+
 class Run(Bench):
     jobname = "fio_zone_mixed"
 
@@ -21,7 +22,7 @@ class Run(Bench):
         self.discard_dev(dev)
 
     def required_container_tools(self):
-        return super().required_container_tools() |  {'fio'}
+        return super().required_container_tools() | {'fio'}
 
     def run(self, dev, container):
         extra = ''
@@ -29,10 +30,10 @@ class Run(Bench):
 
         if is_dev_zoned(dev):
             # Zone Capacity (52% of zone size)
-            zonecap=52
+            zonecap = 52
         else:
             # Zone Size = Zone Capacity on a conv. drive
-            zonecap=100
+            zonecap = 100
             extra = '--zonesize=1102848k'
 
         io_size = int(((self.get_dev_size(dev) * zonecap) / 100) * 2)
@@ -44,8 +45,7 @@ class Run(Bench):
                       f" --max_open_zones={max_open_zones}"
                       f" --filename={dev}"
                       f" --rw=randwrite"
-                      f" --bs=16k"
-                      f" --iodepth=8"
+                      f" --bs=64k"
                       f" {extra}")
 
         prep_param = (f"--name=prep"
@@ -100,7 +100,6 @@ class Run(Bench):
                 write_avg = int(int(job['write']['bw_mean']) / 1024)
                 continue
 
-
             write_target = int(job['jobname'].strip("mix_").strip("_r"))
             lat_us = "%0.3f" % float(job['read']['lat_ns']['mean'] / 1000)
             p = []
@@ -145,5 +144,6 @@ class Run(Bench):
 
         print(f"  Output written to: {csv_file}")
         return csv_file
+
 
 base_benches.append(Run())
