@@ -168,27 +168,6 @@ All fio benchmarks are setting the none scheduler by default if the iodepth is 1
        misleading, as the write throughput requested has not been possible to
        achieve.
 
-## fio_zone_randr_seqw_seqr_rrsw
-  - executes a fio workload that first preconditions the block device to steady
-    state. Then it executes the following workloads:
-    1. 4K_R_READ_256QD: Runs a random read workload with bs=4K, QD 256.
-    2. 128K_S_READ_QD64: Runs a seq read workload with bs=128K, QD 64.
-    3. 128K_70-30_R_READ_S_WRITE_QD64: Runs a rand read and seq write workload
-                                       with QD 64.
-    4. 128KB_S_WRITE_QD64: Runs a seq write workload with bs=128K, QD 64.
-
-  - generated csv output file is fio_zone_randr_seqw_seqr_rrsw.csv
-    1. read_avg_mbs: Avg read bw in mbs, 0 if no reads in the workload.
-    2. read_lat_avg_us: Avg read latency in micro seconds.
-    3. write_avg_mbs: Avg write bw in mbs, 0 if no writes in the workload.
-    4. write_lat_avg_us: Avg write latency in micro seconds.
-    5. read_iops: Read IOPS for a workload involving reads, else 0.
-    6. write_iops: Write IOPS for a workload involving writes, else 0.
-    7. clat_*_us: Latency percentiles
-
-    *NOTE: For workload 3, the read and write percentiles are reported
-           seperately in 2 lines in the csv.
-
 ## fio_zone_throughput_avg_lat
   - Executes all combinations of the following workloads report the throughput
     and latency in the csv report (Note: 14 is a possible value for max_open_zones):
