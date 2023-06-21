@@ -11,7 +11,7 @@ class Run(Bench):
         pass
 
     def get_default_device_scheduler(self):
-        return DeviceScheduler.MQ_DEADLINE
+        return DeviceScheduler.NONE
 
     def id(self):
         return self.jobname
@@ -65,8 +65,7 @@ class Run(Bench):
             mixs_param += (f" --name=mix_{s}_w"
                            f" --wait_for_previous"
                            f" --rate={s}m"
-                           f" --iodepth=8"
-                           f" --bs=16k"
+                           f" --bs=64k"
                            f" --runtime=180"
                            f" --time_based"
                            f" --name=mix_{s}_r"
