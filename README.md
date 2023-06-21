@@ -45,10 +45,11 @@ environment, the script requires the following installed:
    The container installation can be verified by listing the image:
      `sudo podman images`
 
-  - matplotlib and pandas for graph plotting
+  - matplotlib, pandas and openpyxl for graph plotting
     ```
     sudo pip install matplotlib
     sudo pip install pandas
+    sudo pip install openpyxl
     ```
 
 Getting Started

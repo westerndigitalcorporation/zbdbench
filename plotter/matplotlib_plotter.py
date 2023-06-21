@@ -13,6 +13,8 @@ class Plot(object):
     #TODO: Optionally use the data_collector as the plot source
     def __init__(self, output_base, csv_files):
         self.header = []
+        if not isinstance(csv_files, list):
+            csv_files = [csv_files]
         self.csv_files = csv_files
         for csv_file in self.csv_files:
             with open(csv_file, 'r') as f:
@@ -26,10 +28,10 @@ class Plot(object):
 
         desc = '\n'.join(self.csv_files)
         desc_hash = hashlib.sha1(desc.encode()).hexdigest()[:10]
-        self.output_dir = os.path.join(output_base, f"comparison-{desc_hash}")
+        self.output_dir = os.path.join(output_base, f"plot-{desc_hash}")
         if not os.path.exists(self.output_dir):
             os.mkdir(self.output_dir)
-            with open(os.path.join(self.output_dir, 'comparision-description.txt'), 'a') as comp_desc_file:
+            with open(os.path.join(self.output_dir, 'plot-description.txt'), 'a') as comp_desc_file:
                 comp_desc_file.write(desc)
         else:
             print(f"  Plots already exist. Overwriting the plots in {self.output_dir}.")
