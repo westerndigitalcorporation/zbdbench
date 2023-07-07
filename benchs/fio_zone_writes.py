@@ -60,7 +60,7 @@ class Run(Bench):
                      " --write_bw_log=%s/fio_zone_write"
                      " --output=%s/fio_zone_write.log"
                      " --direct=1 --zonemode=zbd"
-                     " --name=seqwriter --rw=randwrite"
+                     " --name=seqwriter --rw=randwrite --norandommap"
                      " --bs=64k --max_open_zones=%s %s") % (dev,
                                                             io_size,
                                                             self.result_path(),

@@ -58,6 +58,7 @@ class Run(Bench):
                       f" --max_open_zones={max_open_zones}"
                       f" --filename={dev}"
                       f" --rw=randwrite"
+                      f" --norandommap"
                       f" --bs=64k"
                       f" {extra}")
 
@@ -68,6 +69,7 @@ class Run(Bench):
         mixs_param = ("--name=mix_0_r"
                       " --wait_for_previous"
                       " --rw=randread"
+                      " --norandommap"
                       " --bs=4k"
                       " --runtime=180"
                       " --ramp_time=30"
@@ -83,6 +85,7 @@ class Run(Bench):
                            f" --time_based"
                            f" --name=mix_{s}_r"
                            f" --rw=randread"
+                           f" --norandommap"
                            f" --bs=4k"
                            f" --runtime=180"
                            f" --ramp_time=30"

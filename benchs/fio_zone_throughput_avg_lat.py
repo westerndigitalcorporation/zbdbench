@@ -112,6 +112,7 @@ class Run(Bench):
                             f" --numjobs={numjobs}"
                             f" --group_reporting"
                             f" --rw=write"
+                            f" --norandommap"
                             f" --bs={block_size}"
                             f" {extra}")
 
@@ -210,6 +211,7 @@ class Run(Bench):
                                         f" --max_open_zones={dev_max_open_zones}"
                                         f" --filename={dev}"
                                         f" --rw={operation}"
+                                        f" --norandommap"
                                         f" --bs={block_size}"
                                         f" {extra}")
 
