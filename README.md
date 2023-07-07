@@ -150,7 +150,8 @@ Overwrite benchmark run with the mq-deadline device scheduler:
 Benchmarks
 ----------
 
-All fio benchmarks are setting the none scheduler by default if the iodepth is 1.
+- All fio benchmarks are setting the none scheduler by default if the iodepth is 1.
+- When doing random fio workloads, the `norandommap` fio option is set.
 
 SPDK FIO plugin support:
   - Following benchmarks have SPDK FIO plugin support
