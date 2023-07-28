@@ -118,6 +118,15 @@ Run specific benchmark:
 
     ./run.py -b benchmark -d /dev/nvmeXnY
 
+Run fio_zone_xxx benchmarks with SPDK FIO plugin(io_uring zoned bdev) in a container env.:
+
+    ./run.py -b fio_zone_xxx --mq-deadline-scheduler -d /dev/nvmeXnY -s yes -c yes
+
+Run fio_zone_xxx benchmarks with SPDK FIO plugin(io_uring zoned bdev) directly on Host System.
+Zbdbench will checkout and build SPDK(also FIO) in dir provided using --spdk-path option:
+
+    ./run.py -b fio_zone_xxx --mq-deadline-scheduler -d /dev/nvmeXnY -s yes -c no --spdk-path /dir/path
+
 Run all benchmarks:
 
     ./run.py -d /dev/nvmeXnY
@@ -142,6 +151,14 @@ Benchmarks
 ----------
 
 All fio benchmarks are setting the none scheduler by default if the iodepth is 1.
+
+SPDK FIO plugin support:
+  - Following benchmarks have SPDK FIO plugin support
+     - fio_zone_write
+     - fio_zone_mixed
+     - fio_zone_throughput_avg_lat
+  - Adding SPDK FIO plugin support for a new benchmark
+     - See benchs/template.py for guidance
 
 ## fio_zone_write
   - executes a fio workload that writes sequential to 14 zones in parallel and

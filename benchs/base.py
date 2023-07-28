@@ -9,6 +9,12 @@ from enum import Enum
 # Global list of available benchmarks
 base_benches = []
 
+# Spdk bdev name used in all spdk related benchmarks
+spdk_bdev = "spdk_bdev"
+# Spdk install dir (the default /root is for container env.)
+# R/W using get/set_spdk_install_dir routines
+spdk_install_dir = "/root"
+
 # Enum for device scheduler
 class DeviceScheduler(Enum):
     NONE = 1
@@ -20,6 +26,9 @@ class Bench(object):
     output = 'zbdbench_results'
     # container overwritten by setup()
     container = 'no'
+    # spdk folder path
+    spdk_path = ''
+
 
     # Interface to be implemented by inheriting classes
     def id(self):
@@ -28,6 +37,7 @@ class Bench(object):
     def setup(self, container, output):
         self.container = container
         self.output = output
+        self.spdk_path = get_spdk_install_dir()
 
     def run(self):
         print("Not implemented (run)")
@@ -51,7 +61,7 @@ class Bench(object):
         return self.output
 
     def container_sys_cmd(self, dev, extra_params):
-        return f"podman run --device={dev}:{dev} -v \"{self.output}:/output\" --security-opt unmask=/sys/dev/block --security-opt seccomp=unconfined {extra_params}"
+        return f"podman run --device={dev}:{dev} -v \"{self.output}:/output\" --security-opt unmask=/sys/dev/block {extra_params}"
 
     def required_host_tools(self):
         return {'blkzone', 'blkdiscard'}
@@ -64,8 +74,15 @@ class Bench(object):
         container_cmd = ''
 
         if container == 'yes':
+            #All non spdk cases use seccomp unconfined
+            extra_container_params = ' --security-opt seccomp=unconfined '
             if tool == 'fio':
                 exec_cmd = 'zfio'
+                if self.spdk_path:
+                    # If spdk_path is not empty, we want to launch the spdk+fio container
+                    exec_cmd = 'zspdk-fio'
+                    # spdk uses --privileged with seccomp
+                    extra_container_params = ' --privileged -v "/dev/hugepages:/dev/hugepages" -v "/dev/shm:/dev/shm" -v "/var/tmp:/var/tmp" -v "/lib/modules:/lib/modules" --security-opt unmask=/sys/dev/block --security-opt seccomp=./recipes/docker/spdk/uring/zbdbench_seccomp.json '
             if tool == 'db_bench':
                 exec_cmd = 'zrocksdb'
             if tool == 'zenfs':
@@ -76,6 +93,10 @@ class Bench(object):
                 exec_cmd = 'zxfs'
 
             container_cmd = self.container_sys_cmd(dev, extra_container_params)
+        else:
+            #If the env is non-containerised, use spdk via the fio plugin
+            if tool == 'spdk-fio':
+                exec_cmd = 'fio'
 
         return f"{container_cmd} {exec_cmd}"
 
@@ -184,3 +205,15 @@ def is_dev_zoned(dev):
         res = f.readline()
 
     return ("host-managed" in res)
+
+# Checkout and build SPDK in Host System
+def spdk_build(spdk_build_script_path, install_dir, dev):
+    print(f"Using {install_dir} dir for SPDK (and FIO) builds")
+    subprocess.check_call(f"recipes/docker/{spdk_build_script_path}/spdk_build.sh {install_dir} {dev}", shell=True)
+
+def get_spdk_install_dir():
+    return spdk_install_dir
+def set_spdk_install_dir(install_dir):
+    global spdk_install_dir
+    spdk_install_dir = install_dir
+    print(f"Setting SPDK install dir: {spdk_install_dir}")

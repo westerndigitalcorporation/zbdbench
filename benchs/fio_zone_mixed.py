@@ -1,7 +1,7 @@
 import json
 import csv
-from .base import base_benches, Bench, DeviceScheduler
-from benchs.base import is_dev_zoned
+from .base import base_benches, Bench, DeviceScheduler, spdk_bdev
+from benchs.base import is_dev_zoned, spdk_build
 
 
 class Run(Bench):
@@ -38,8 +38,21 @@ class Run(Bench):
 
         io_size = int(((self.get_dev_size(dev) * zonecap) / 100) * 2)
 
-        init_param = (f"--ioengine=io_uring"
-                      f" --direct=1"
+        if self.spdk_path:
+           # SPDK specific args
+            extra = extra + f" --ioengine={self.spdk_path}/spdk/build/fio/spdk_bdev --spdk_json_conf={self.spdk_path}/spdk/bdev_zoned_uring.json --thread=1 "
+            if container == 'no':
+                #Checkout and build SPDK for Host system
+                spdk_build("spdk/uring", self.spdk_path, dev)
+
+                # Replace the nvme physical dev with spdk bdev.
+                # For '-c yes' case, we pass the nvme dev to the container and
+                # then replace it within the spdk bdev
+                dev = spdk_bdev
+        else:
+            extra = extra + ' --ioengine=io_uring '
+
+        init_param = (f" --direct=1"
                       f" --zonemode=zbd"
                       f" --output-format=json"
                       f" --max_open_zones={max_open_zones}"
