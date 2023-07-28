@@ -3,8 +3,8 @@ import sys
 import glob
 import os
 from datetime import datetime
-from .base import base_benches, Bench, DeviceScheduler
-from benchs.base import is_dev_zoned
+from .base import base_benches, Bench, DeviceScheduler, spdk_bdev
+from benchs.base import is_dev_zoned, spdk_build
 
 operation_list = ["read", "randread", "write"]
 number_parallel_jobs_list = [1, 2, 4, 8, 16, 32, 64, 128]
@@ -51,6 +51,8 @@ class Run(Bench):
         extra = ''
         numjobs = 1
         iodepth = 1
+        # Backup the nvme dev as it's changed to spdk bdev for spdk runs
+        backup_dev = dev
 
         if not is_dev_zoned(dev):
             print("This test is ment to be run on a zoned dev")
@@ -70,6 +72,11 @@ class Run(Bench):
             print("The provided device has not enough space to prepare it for the given workload size")
             sys.exit(1)
 
+        if self.spdk_path:
+            if container == 'no':
+                # Checkout and build SPDK for Host system
+                spdk_build("spdk/uring", self.spdk_path, dev)
+
         for operation in operation_list:
             tmp_number_parallel_jobs_list = number_parallel_jobs_list
 
@@ -86,7 +93,15 @@ class Run(Bench):
 
                 print("About to prep the drive for read job")
                 self.discard_dev(dev)
-                init_param = (f"--ioengine={ioengine}"
+
+                if self.spdk_path:
+                    #spdk specific args
+                    ioengine = f"{self.spdk_path}/spdk/build/fio/spdk_bdev"
+                    extra = extra + f" --spdk_json_conf={self.spdk_path}/spdk/bdev_zoned_uring.json --thread=1 "
+                    if container == 'no':
+                        dev = spdk_bdev
+
+                init_param = (f" --ioengine={ioengine}"
                             f" --direct={direct}"
                             f" --zonemode={zonemode}"
                             f" --output-format={output_format}"
@@ -132,6 +147,8 @@ class Run(Bench):
 
                 print("Finished preping the drive")
 
+            #Restore the physical nvme dev name
+            dev = backup_dev
             for number_parallel_jobs in tmp_number_parallel_jobs_list:
 
                 for queue_depth in queue_depth_list:
@@ -179,6 +196,13 @@ class Run(Bench):
                             if "write" in operation:
                                 self.discard_dev(dev)
 
+                            if self.spdk_path:
+                                #spdk specific args
+                                ioengine = f"{self.spdk_path}/spdk/build/fio/spdk_bdev"
+                                extra = extra + f" --spdk_json_conf={self.spdk_path}/spdk/bdev_zoned_uring.json --thread=1 "
+                                if container == 'no':
+                                    dev = spdk_bdev
+
                             init_param = (f"--ioengine={ioengine}"
                                         f" --direct={direct}"
                                         f" --zonemode={zonemode}"
@@ -222,6 +246,9 @@ class Run(Bench):
                                                 ]
                             self.safe_csv_metadata(os.path.basename(fio_output_log_file) + "metadata", fio_run_metadata)
                             print("Finished job")
+                            #Restore the physical nvme dev name for the next pass
+                            dev = backup_dev
+
 
     def teardown(self, dev, container):
         pass
@@ -253,7 +280,7 @@ class Run(Bench):
         plot = matplotlib_plotter.Plot(self.output, csv_files)
         for op in operation_list:
             plot.gen_FIO_ZONE_THROUGHPUT_AVG_LAT(op)
-        print("  Done generateing graphs")
+        print("  Done generating graphs")
 
 base_benches.append(Run())
 

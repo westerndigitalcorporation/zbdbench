@@ -8,7 +8,7 @@ import distutils.spawn
 import argparse
 
 from datetime import datetime
-from benchs.base import base_benches, is_dev_zoned, DeviceScheduler
+from benchs.base import base_benches, is_dev_zoned, DeviceScheduler, set_spdk_install_dir
 from benchs import *
 
 def get_zbdbench_version():
@@ -289,9 +289,12 @@ def main(argv):
     group.add_argument('--help', '-h', action='store_true', help='Print help message and exit')
     group.add_argument('--collect-results', type=str, help='Collect benchmark results of the specified path within this argument in a MySQL database which is specified by the mysql.conf file.')
     parser.add_argument('--container', '-c', type=str, default='yes', choices=['yes', 'no'], help='Use containerized binaries or system binaries')
+    parser.add_argument('--use-spdk', '-s', type=str, default='no', choices=['yes', 'no'], help='Use spdk plugin for fio(uses io_uring spdk bdev)')
     parser.add_argument('--benchmarks', '-b', type=str, nargs='+', metavar='NAME', help='Benchmarks to run')
     parser.add_argument('--output', '-o', type=str, default=os.path.join(os.getcwd(), 'zbdbench_results'), help='Directory to place results. Will be created if it does not exist')
     parser.add_argument('--annotation', '-a', type=str, default=str(datetime.now().strftime("%Y-%m-%d-%H%M%S")), help='Annotation for easier manual benchmark run identification')
+    parser.add_argument('--spdk-path', type=str, help='Dir path for SPDK checkout and build. Needed only for host spdk(-c no -s yes) benchmarks')
+
     scheduler_group = parser.add_mutually_exclusive_group(required=False)
     scheduler_group.add_argument('--none-scheduler', action='store_true', help='Use none scheduler for the given drive.')
     scheduler_group.add_argument('--mq-deadline-scheduler', action='store_true', help='Use mq-deadline scheduler for the given drive.')
@@ -304,6 +307,7 @@ def main(argv):
     benches = base_benches
     run = ''
     scheduler_overwrite = None
+    use_spdk = args.use_spdk
 
     if args.help:
         parser.print_help()
@@ -343,6 +347,19 @@ def main(argv):
                 print(f"Invalid benchmark name: {name}")
                 list_benchs(base_benches)
                 sys.exit(1)
+            else:
+                if use_spdk == 'yes':
+                    if args.spdk_path is not None:
+                        if container == 'no':
+                            set_spdk_install_dir((args.spdk_path).rstrip('/'))
+                        else:
+                            print("Ignoring user provided spdk install dir for '-c yes' option.")
+                    else:
+                        if container != 'yes':
+                            print("SPDK install dir not provided!")
+                            sys.exit()
+                else:
+                    set_spdk_install_dir('')
 
         benches = [x for x in base_benches if x.id() in args.benchmarks]
         if len(benches) == 0:

@@ -29,7 +29,28 @@ class Run(Bench):
 
     def run(self, dev, container):
         bdev = self.sys_container_dev(dev, container)
-        fio_params = "fio_params"
+
+        ## SPDK FIO plugin support template - start
+        if self.spdk_path:
+            #spdk specific args
+            extra = extra + f" --ioengine={self.spdk_path}/spdk/build/fio/spdk_bdev --spdk_json_conf={self.spdk_path}/spdk/bdev_zoned_uring.json --thread=1 "
+            # For non container env:
+            # 1. Provide --spdk-path cmdline arg
+            # 2. Update --ioengine, --spdk_json_conf & --thread
+            # 3. Replace nvme dev with json bdev
+            if container == 'no':
+                # Invoe script to checkout & build SPDK for Host system
+                spdk_build("spdk/uring", self.spdk_path, dev)
+
+                # Replace the nvme physical dev with spdk bdev.
+                # For '-c yes' case, we pass the nvme dev as-is and further
+                dev = spdk_bdev
+        else:
+            # Non SPDK case (use required fio ioengine, e.g. libaio etc. )
+            extra = extra + ' --ioengine=libaio '
+        ## SPDK FIO plugin support template - end
+
+        fio_params = "fio_params" + extra
         self.run_cmd(dev, container, 'fio', fio_param)
 
     def teardown(self, dev, container):

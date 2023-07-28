@@ -1,8 +1,8 @@
 import csv
 import sys
 from statistics import mean
-from .base import base_benches, Bench, DeviceScheduler
-from benchs.base import is_dev_zoned
+from .base import base_benches, Bench, DeviceScheduler, spdk_bdev
+from benchs.base import is_dev_zoned, spdk_build
 
 
 class Run(Bench):
@@ -40,12 +40,26 @@ class Run(Bench):
 
         io_size = int(((self.get_dev_size(dev) * zonecap) / 100) * self.loops)
 
+        if self.spdk_path:
+            #spdk specific args
+            extra = extra + f" --ioengine={self.spdk_path}/spdk/build/fio/spdk_bdev --spdk_json_conf={self.spdk_path}/spdk/bdev_zoned_uring.json --thread=1 "
+            if container == 'no':
+                #Checkout and build SPDK for Host system
+                spdk_build("spdk/uring", self.spdk_path, dev)
+
+                # Replace the nvme physical dev with spdk bdev.
+                # For '-c yes' case, we do it within the container, else the
+                # nvme dev will not be passed to the container
+                dev = spdk_bdev
+        else:
+            extra = extra + ' --ioengine=libaio '
+
         fio_param = ("--filename=%s"
                      " --io_size=%sk"
                      " --log_avg_msec=1000"
                      " --write_bw_log=%s/fio_zone_write"
                      " --output=%s/fio_zone_write.log"
-                     " --ioengine=libaio --direct=1 --zonemode=zbd"
+                     " --direct=1 --zonemode=zbd"
                      " --name=seqwriter --rw=randwrite"
                      " --bs=64k --max_open_zones=%s %s") % (dev,
                                                             io_size,
