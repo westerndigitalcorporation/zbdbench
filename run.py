@@ -184,13 +184,14 @@ def collect_results_in_sqlite(output_path, results_dir):
     print("Done collecting results.")
 
 def check_and_set_scheduler_for_benchmark(dev, benchmark, scheduler_overwrite):
-    scheduler = benchmark.get_default_device_scheduler()
-    if scheduler_overwrite:
-        scheduler = scheduler_overwrite
-    if scheduler == DeviceScheduler.MQ_DEADLINE:
-        check_and_set_mqdeadline_scheduler(dev)
-    else:
-        check_and_set_none_scheduler(dev)
+    if is_dev_zoned(dev):
+        scheduler = benchmark.get_default_device_scheduler()
+        if scheduler_overwrite:
+            scheduler = scheduler_overwrite
+        if scheduler == DeviceScheduler.MQ_DEADLINE:
+            check_and_set_mqdeadline_scheduler(dev)
+        else:
+            check_and_set_none_scheduler(dev)
 
 
 def run_benchmarks(dev, container, benches, output_path, run_output, scheduler_overwrite, annotation):
