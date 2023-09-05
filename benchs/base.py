@@ -166,7 +166,7 @@ class Bench(object):
         else:
             filename = path + "/lsblk-capacity.txt"
             lines = [l for l in fileinput.input(filename)]
-            size_bytes = lines[1].split()[3]
+            size_bytes = int(lines[1].split()[3])
             size_gb = size_bytes / (1024 * 1024 * 1024)
             return size_gb
 
