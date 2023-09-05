@@ -3,9 +3,11 @@ import csv
 import os
 import sys
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import hashlib
 from itertools import groupby
+from benchs import fio_steady_state_performance
 
 # Generic Plot class that supplies rudimentary matplotlib helper functions
 # Inspired by https://stackoverflow.com/questions/54965009/grouped-x-axis-variability-plot-in-python
@@ -82,6 +84,35 @@ class Plot(object):
 
     def get_user_annotation(self, results_dir):
         return self.get_file_content(results_dir, "user_annotation.txt")
+
+    def gen_FIO_STEADY_STATE_PERFORMANCE(self):
+        self.reset_plot()
+        datapoints = {}
+        time_step_sec = fio_steady_state_performance.log_interval_sec
+        max_data_points = 0
+
+        #Collect all datapoints in GB/s
+        for csv_file in self.csv_files:
+            max_data_points = max(max_data_points, sum(1 for _ in open(csv_file)) - 1)
+            tmp = pd.read_csv(csv_file, delimiter = ';')['write_bw_kB'].values.tolist()
+            data = [float(x/1000000.0) for x in tmp]
+            datapoints[str(self.get_user_annotation(os.path.dirname(csv_file)))] = data
+
+        #Extend smaller data vectors
+        for key, value in datapoints.items():
+            if len(value) < max_data_points:
+                value.extend([np.nan]*(max_data_points - len(value)))
+                datapoints[key] = value
+
+        datapoints['time_sec'] = range(time_step_sec,(time_step_sec*max_data_points + 1),time_step_sec)
+        df = pd.DataFrame(datapoints)
+        df = df.set_index(['time_sec'])
+        ax = df.plot(figsize=(16,9))
+
+        ax.set_xlabel("Time [s]", fontweight="bold")
+        ax.set_ylabel("Throughput [GB/s]", fontweight="bold")
+        ax.set_title("2x Device Capacity (rand) Overwrite", fontweight="bold")
+        self.save_graph_plt_in_output_dir(f"steady-state-performance.pdf")
 
     def gen_FIO_ZONE_THROUGHPUT_AVG_LAT(self, operation):
         self.reset_plot()

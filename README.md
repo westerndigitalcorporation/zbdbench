@@ -161,6 +161,13 @@ SPDK FIO plugin support:
   - Adding SPDK FIO plugin support for a new benchmark
      - See benchs/template.py for guidance
 
+## fio_steady_state_performance
+  - Puts the (conventional) drive into its steady state by completely filling it
+    and then overwriting it. This puts conventional block devices into the state
+    where the on device garbage colletion is working to free up space.
+
+  - (Random) Read and (Random) Write performance of the drive is subseqently messured.
+
 ## fio_zone_write
   - executes a fio workload that writes sequential to 14 zones in parallel and
     while writing 6 times the capacity of the device.
