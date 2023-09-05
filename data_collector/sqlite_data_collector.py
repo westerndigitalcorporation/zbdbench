@@ -5,7 +5,7 @@ import socket
 import os
 import sqlite3
 from sqlite3 import Error
-from benchs import fio_zone_throughput_avg_lat
+from benchs import fio_steady_state_performance, fio_zone_throughput_avg_lat
 
 class DatabaseConnection(object):
     sqlite_connection = None
@@ -80,7 +80,8 @@ class DatabaseConnection(object):
 
     def create_required_tables_if_not_exists(self):
         self.create_ZBDBENCH_RUN_table_if_not_exists()
-        self.create_FIO_ZONE_THROUGHPUT_AVG_LAT_table_if_not_exists()
+        self.create_bench_table_if_not_exists(fio_zone_throughput_avg_lat)
+        self.create_bench_table_if_not_exists(fio_steady_state_performance)
 
     #TODO: add benchmark itself in that table
     def create_ZBDBENCH_RUN_table_if_not_exists(self):
@@ -98,16 +99,17 @@ class DatabaseConnection(object):
                      ");")
         self.cursor.execute(sql_query)
 
-    def create_FIO_ZONE_THROUGHPUT_AVG_LAT_table_if_not_exists(self):
-        csv_header = fio_zone_throughput_avg_lat.csv_header
+    def create_bench_table_if_not_exists(self, bench):
+        csv_header = bench.csv_header
         table_fields = (", ".join(["%s text"] * len(csv_header))
                         % tuple(csv_header))
-        sql_query = ("CREATE TABLE IF NOT EXISTS fio_zone_throughput_avg_lat ("
-                     "id integer PRIMARY KEY,"
-                     "zbdbench_run_id integer NOT NULL,"
-                     "%s,"
-                     "FOREIGN KEY (zbdbench_run_id) REFERENCES zbdbench_run (id)"
-                     ");" % table_fields)
+        bench_name = bench.__name__.split("benchs.")[-1]
+        sql_query = (f"CREATE TABLE IF NOT EXISTS {bench_name} ("
+                     f"id integer PRIMARY KEY,"
+                     f"zbdbench_run_id integer NOT NULL,"
+                     f"{table_fields},"
+                     f"FOREIGN KEY (zbdbench_run_id) REFERENCES zbdbench_run (id)"
+                     f");")
         self.cursor.execute(sql_query)
 
     def insert_entry_into_ZBDBENCH_RUN(self, content):
@@ -126,19 +128,20 @@ class DatabaseConnection(object):
         self.cursor.execute(sql_query, content)
         return self.cursor.lastrowid
 
-    def insert_entry_into_FIO_ZONE_THROUGHPUT_AVG_LAT(self, content):
-        csv_header = fio_zone_throughput_avg_lat.csv_header
+    def insert_entry_into_bench_table(self, bench, content):
+        csv_header = bench.csv_header
+        bench_name = bench.__name__.split("benchs.")[-1]
         table_fields = (",".join(["%s"] * len(csv_header))
                         % tuple(csv_header))
         values_placeholder = ",".join(["?"] * (len(csv_header) + 1))
         if len(csv_header) + 1 != len(content):
-            print("Header mismatch for the fio_zone_throughput_avg_lat content attempted to be added to the DB. Exiting!")
+            print(f"Header mismatch for the {bench_name} content attempted to be added to the DB. Exiting!")
             exit(1)
-        sql_query = ("INSERT INTO fio_zone_throughput_avg_lat("
-                     "zbdbench_run_id,"
-                     "%s"
-                     ")"
-                     "VALUES(%s)" % (table_fields, values_placeholder))
+        sql_query = (f"INSERT INTO {bench_name}("
+                     f"zbdbench_run_id,"
+                     f"{table_fields}"
+                     f")"
+                     f"VALUES({values_placeholder})")
         self.cursor.execute(sql_query, content)
         return self.cursor.lastrowid
 
@@ -161,21 +164,27 @@ class DatabaseConnection(object):
 
         if benchmark == "fio_zone_throughput_avg_lat":
             csv_file_path = os.path.join(results_dir, "fio_zone_throughput_avg_lat.csv")
-            with open(csv_file_path, 'r') as file:
-                try:
-                    header = next(csv.reader(file, delimiter=';'))
-                    if header != fio_zone_throughput_avg_lat.csv_header:
-                        print("Header expected for the fio_zone_throughput_avg_lat is different form the actuall csv report. Exiting!")
-                        exit(1)
-                    fio_data=[tuple(line) for line in csv.reader(file, delimiter=';')]
-                    for fio_dataline in fio_data:
-                        content = tuple(str(zbdbench_run_id)) + fio_dataline
-                        self.insert_entry_into_FIO_ZONE_THROUGHPUT_AVG_LAT(content)
-                except Error as e:
-                    print(e)
+            bench_module = fio_zone_throughput_avg_lat
+        if benchmark == "fio_steady_state_performance":
+            csv_file_path = os.path.join(results_dir, "fio_steady_state_performance.csv")
+            bench_module = fio_steady_state_performance
         else:
             #TODO: Remove zbdbench_run_id entry
-            print("The data collection for benchmark '%s' is not implemented. Skipping this step." % benchmark)
+            print(f"The data collection for benchmark '{benchmark}' is not implemented. Skipping this step.")
+            exit(0)
+
+        with open(csv_file_path, 'r') as file:
+            try:
+                header = next(csv.reader(file, delimiter=';'))
+                if header != bench_module.csv_header:
+                    print(f"Header expected for the {benchmark} is different form the actuall csv report. Exiting!")
+                    exit(1)
+                data=[tuple(line) for line in csv.reader(file, delimiter=';')]
+                for dataline in data:
+                    content = tuple(str(zbdbench_run_id)) + dataline
+                    self.insert_entry_into_bench_table(bench_module, content)
+            except Error as e:
+                print(e)
 
 if __name__ == "__main__":
     print("%s is not meant to run as a stand alone script." % os.path.basename(__file__))
