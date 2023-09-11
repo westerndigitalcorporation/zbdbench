@@ -43,6 +43,13 @@ class Plot(object):
         plt.clf()
         plt.close()
 
+    def check_env_and_set_title(self, ax, title):
+        PLOT_TITLE = os.getenv('PLOT_TITLE')
+        if PLOT_TITLE == None:
+            ax.set_title(title, fontweight="bold")
+        else:
+            ax.set_title(str(PLOT_TITLE), fontweight="bold")
+
     def save_graph_plt_in_output_dir(self, name):
         filename = os.path.join(self.output_dir, name)
         print(f"Saving {filename}")
@@ -107,11 +114,11 @@ class Plot(object):
         datapoints['time_sec'] = range(time_step_sec,(time_step_sec*max_data_points + 1),time_step_sec)
         df = pd.DataFrame(datapoints)
         df = df.set_index(['time_sec'])
-        ax = df.plot(figsize=(16,9))
+        ax = df.plot(figsize=(8,7))
 
         ax.set_xlabel("Time [s]", fontweight="bold")
         ax.set_ylabel("Throughput [GB/s]", fontweight="bold")
-        ax.set_title("2x Device Capacity (rand) Overwrite", fontweight="bold")
+        self.check_env_and_set_title(ax, "Sequential Fill + 2x Device Capacity Random Overwrite @ 64KiB, QD 16")
         self.save_graph_plt_in_output_dir(f"steady-state-performance.pdf")
 
     def gen_FIO_ZONE_THROUGHPUT_AVG_LAT(self, operation):
@@ -176,7 +183,7 @@ class Plot(object):
         ax.set_ylabel("Throughput [MiB]", fontweight="bold")
         ax.set_xlabel(parallel_label, fontweight="bold")
         ax.xaxis.set_label_coords(0.5,-0.22)
-        ax.set_title(f"Throughput fio {operation} workload", fontweight="bold")
+        self.check_env_and_set_title(ax, f"Throughput fio {operation} workload")
         self.label_group_bar_table(ax, df)
         self.save_graph_plt_in_output_dir(f"throughput-graph-{operation}.pdf")
 
