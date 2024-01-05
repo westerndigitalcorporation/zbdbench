@@ -61,7 +61,7 @@ class Bench(object):
         return self.output
 
     def container_sys_cmd(self, dev, extra_params):
-        return f"podman run --device={dev}:{dev} -v \"{self.output}:/output\" --security-opt unmask=/sys/dev/block {extra_params}"
+        return f"podman run --device={dev}:{dev} -v \"{self.output}:/output\" --privileged --security-opt unmask=/sys/dev/block {extra_params}"
 
     def required_host_tools(self):
         return {'blkzone', 'blkdiscard'}
@@ -82,7 +82,7 @@ class Bench(object):
                     # If spdk_path is not empty, we want to launch the spdk+fio container
                     exec_cmd = 'zspdk-fio'
                     # spdk uses --privileged with seccomp
-                    extra_container_params = ' --privileged -v "/dev/hugepages:/dev/hugepages" -v "/dev/shm:/dev/shm" -v "/var/tmp:/var/tmp" -v "/lib/modules:/lib/modules" --security-opt unmask=/sys/dev/block --security-opt seccomp=./recipes/docker/spdk/uring/zbdbench_seccomp.json '
+                    extra_container_params = ' -v "/dev/hugepages:/dev/hugepages" -v "/dev/shm:/dev/shm" -v "/var/tmp:/var/tmp" -v "/lib/modules:/lib/modules" --security-opt seccomp=./recipes/docker/spdk/uring/zbdbench_seccomp.json '
             if tool == 'db_bench':
                 exec_cmd = 'zrocksdb'
             if tool == 'zenfs':
