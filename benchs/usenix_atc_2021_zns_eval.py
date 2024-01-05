@@ -8,11 +8,11 @@ from .base import base_benches, Bench
 from benchs.base import is_dev_zoned
 
 class Run(Bench):
-    tmp_result_path = ''
+    tmp_output_path = ''
 
     def __init__(self):
         self.jobname = "usenix_atc_2021_zns_eval"
-        self.tmp_result_path = self.result_path()
+        self.tmp_output_path = self.output
 
     def id(self):
         return self.jobname
@@ -77,7 +77,7 @@ class Run(Bench):
                       " --delete_obsolete_files_period_micros=", self.delete_obsolete_files_period, \
                       " --statistics", \
                       ''.join(bench_params), \
-                      " > ", os.path.join(self.tmp_result_path, name + ".txt"), " 2>&1"
+                      " > ", os.path.join(self.tmp_output_path, name + ".txt"), " 2>&1"
 
         return ''.join(params)
 
@@ -189,7 +189,7 @@ class Run(Bench):
 
     def create_mountpoint(self, dev, filesystem):
         relative_mountpoint = "%s_%s" % (dev.strip('/dev/'), filesystem)
-        mountpoint = os.path.join(self.tmp_result_path, relative_mountpoint)
+        mountpoint = os.path.join(self.tmp_output_path, relative_mountpoint)
         os.mkdir(mountpoint)
         return mountpoint, relative_mountpoint
 
@@ -235,7 +235,7 @@ class Run(Bench):
             self.run_cmd(dev, container, 'mkfs.f2fs', f'-f -o 5 -m -c {dev} {self.conv_nullblk_dev}', f'-v "{self.conv_nullblk_dev}:{self.conv_nullblk_dev}"')
             subprocess.check_call('sudo modprobe f2fs', shell=True)
             subprocess.check_call(f'mount -t f2fs -o active_logs=6,whint_mode=user-based {self.conv_nullblk_dev} {mountpoint}', shell=True)
-            self.db_env_param = f'--db=/output/{relative_mountpoint}/eval'
+            self.db_env_param = f'--db=/output/{filesystem}/{relative_mountpoint}/eval'
             return mountpoint
         else:
             print("Filesystem %s is not currently not supported for ZNS drives in this benchmark" % filesystem)
@@ -252,7 +252,7 @@ class Run(Bench):
             mount_opt = '-o whint_mode=user-based'
         self.run_cmd(dev, container, f'mkfs.{filesystem}' , f'{force_flag} {dev}')
         subprocess.check_call(f'mount {mount_opt} {dev} {mountpoint}', shell=True)
-        self.db_env_param = f'--db=/output/{relative_mountpoint}/eval'
+        self.db_env_param = f'--db=/output/{filesystem}/{relative_mountpoint}/eval'
         return mountpoint
 
     def get_filesystems_to_test(self, is_device_zoned):
@@ -262,13 +262,13 @@ class Run(Bench):
             return self.conventional_filesystems
 
     def run(self, dev, container):
-        root_output = self.tmp_result_path
+        root_output = self.output
         is_device_zoned = is_dev_zoned(dev)
         for filesystem in self.get_filesystems_to_test(is_device_zoned):
             mountpoint = ''
             sub_output = os.path.join(root_output, filesystem)
             os.makedirs(sub_output)
-            self.tmp_result_path = sub_output
+            self.tmp_output_path = sub_output
             if is_device_zoned:
                 mountpoint = self.setup_zns(dev, container, filesystem)
             else:
@@ -288,7 +288,7 @@ class Run(Bench):
                 if self.conv_nullblk_dev != '':
                     self.destroy_nullblk_dev(self.conv_nullblk_dev)
 
-        self.tmp_result_path = root_output
+        self.tmp_output_path = root_output
 
     def report(self, path):
         csv_files = []
