@@ -172,7 +172,7 @@ class Plot(object):
         min_throughput -= 20
         if min_throughput < 0:
             min_throughput = 0
-        ax = df.plot(marker='o', xlim=(-.5, (len(benchmarking_labels)/number_datapoints)-0.5), ylim=(min_throughput, max_throughput + 200), figsize=(15,7.5))
+        ax = df.plot.bar(xlim=(-.5, (len(benchmarking_labels)/number_datapoints)-0.5), ylim=(min_throughput, max_throughput + 200), figsize=(15,7.5))
 
         #Disable x ticks and regular labels
         ax.set_xticklabels('')
